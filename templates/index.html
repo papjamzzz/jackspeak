@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>jackspeak</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #08090d;
+      --surface: #0d0f1a;
+      --card:    #11131e;
+      --card2:   #151828;
+      --border:  #1e2235;
+      --muted:   #2a2f48;
+      --text:    #f0f2ff;
+      --dim:     #5a6080;
+      --accent:  #4fc3f7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+
+    /* ── HEADER ── */
+    .header {
+      background: linear-gradient(180deg, #0e1020 0%, #08090d 100%);
+      border-bottom: 1px solid rgba(79,195,247,0.1);
+      padding: 13px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      backdrop-filter: blur(20px);
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(79,195,247,0.6), transparent);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand img {
+      height: 30px;
+      border-radius: 6px;
+    }
+    .brand-name {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    /* ── MAIN ── */
+    .main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    /* ── INFO BAR ── */
+    #info-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 8px 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--dim);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 100;
+    }
+    #info-bar img { height: 16px; opacity: 0.6; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand">
+    <img src="/static/logo.png" onerror="this.style.display='none'">
+    <div class="brand-name">jackspeak</div>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Build your dashboard here -->
+</div>
+
+<div id="info-bar">
+  <img src="/static/logo.png" onerror="this.style.display='none'">
+  <span>jackspeak</span>
+</div>
+
+</body>
+</html>
