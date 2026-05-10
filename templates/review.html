@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JackSpeak — Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --accent: #7c5cfc;
+    --accent2: #a78bfa;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --success: #34d399;
+    --warn: #fbbf24;
+    --error: #f87171;
+
+    --hungry: #fb923c;
+    --greeting: #34d399;
+    --distressed: #f87171;
+    --bonding: #a78bfa;
+    --hunting: #fbbf24;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-row img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  h1 span { color: var(--accent2); }
+
+  .back-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .back-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .stat-val {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover { color: var(--text); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .recordings-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .rec-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    transition: border-color 0.15s;
+  }
+
+  .rec-card:hover { border-color: #3a3a50; }
+  .rec-card.incomplete { border-left: 3px solid var(--warn); }
+
+  .rec-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .rec-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .rec-date {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .cat-hungry    { background: #fb923c22; color: var(--hungry); }
+  .cat-greeting  { background: #34d39922; color: var(--greeting); }
+  .cat-distressed{ background: #f8717122; color: var(--error); }
+  .cat-bonding   { background: #a78bfa22; color: var(--bonding); }
+  .cat-hunting   { background: #fbbf2422; color: var(--warn); }
+  .cat-pending   { background: #6b6b8022; color: var(--muted); }
+
+  .confidence-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .conf-high   { background: var(--success); }
+  .conf-medium { background: var(--warn); }
+  .conf-low    { background: var(--error); }
+
+  audio {
+    width: 100%;
+    height: 36px;
+    margin-bottom: 10px;
+    filter: invert(1) hue-rotate(180deg) brightness(0.8);
+    border-radius: 8px;
+  }
+
+  .rec-reasoning {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    font-style: italic;
+    margin-bottom: 10px;
+  }
+
+  .rec-description {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+
+  .pending-label {
+    font-size: 12px;
+    color: var(--warn);
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .describe-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .describe-form textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    padding: 10px 12px;
+    resize: vertical;
+    min-height: 72px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .describe-form textarea:focus { border-color: var(--accent); }
+  .describe-form textarea::placeholder { color: var(--muted); }
+
+  .describe-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .submit-btn {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .submit-btn:hover { opacity: 0.85; }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .submitting-msg {
+    font-size: 12px;
+    color: var(--muted);
+    display: none;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state p { font-size: 15px; }
+
+  .no-match { display: none; }
+
+  @media (min-width: 640px) {
+    body { max-width: 680px; margin: 0 auto; padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-row">
+    <img src="/static/logo.png" alt="JackSpeak" onerror="this.style.display='none'">
+    <h1>Jack<span>Speak</span> — Review</h1>
+  </div>
+  <a href="/" class="back-btn">← Record</a>
+</header>
+
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-val">{{ recordings | length }}</div>
+    <div class="stat-label">Total</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val" style="color:var(--success)">{{ recordings | selectattr('complete') | list | length }}</div>
+    <div class="stat-label">Labeled</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val" style="color:var(--warn)">{{ recordings | rejectattr('complete') | list | length }}</div>
+    <div class="stat-label">Pending</div>
+  </div>
+</div>
+
+<div class="filter-row">
+  <button class="filter-btn active" onclick="filter('all', this)">All</button>
+  <button class="filter-btn" onclick="filter('pending', this)">Pending</button>
+  {% for cat, label in labels.items() %}
+  <button class="filter-btn" onclick="filter('{{ cat }}', this)">{{ label.split('/')[0].strip() }}</button>
+  {% endfor %}
+</div>
+
+{% if recordings %}
+<div class="recordings-list" id="list">
+  {% for rec in recordings %}
+  <div class="rec-card {% if not rec.complete %}incomplete{% endif %}"
+       data-cat="{{ rec.category or 'pending' }}"
+       data-complete="{{ rec.complete }}"
+       id="card-{{ rec.id }}">
+
+    <div class="rec-header">
+      <div class="rec-meta">
+        {% if rec.category %}
+          <span class="category-badge cat-{{ rec.category }}">
+            {% if rec.confidence %}
+              <span class="confidence-dot conf-{{ rec.confidence }}"></span>
+            {% endif %}
+            {{ labels.get(rec.category, rec.category) }}
+          </span>
+        {% else %}
+          <span class="category-badge cat-pending">⏳ Needs label</span>
+        {% endif %}
+        <span class="rec-date">{{ rec.created_at[:16].replace('T', ' ') if rec.created_at else '' }}</span>
+      </div>
+    </div>
+
+    <audio controls preload="none"
+      src="/data/recordings/{{ rec.filename }}">
+    </audio>
+
+    {% if rec.description %}
+      <div class="rec-description">{{ rec.description }}</div>
+    {% endif %}
+
+    {% if rec.reasoning %}
+      <p class="rec-reasoning">"{{ rec.reasoning }}"</p>
+    {% endif %}
+
+    {% if not rec.complete %}
+      <div class="pending-label">⚠ Add a description to classify this sound</div>
+      <div class="describe-form" id="form-{{ rec.id }}">
+        <textarea placeholder="What was Jack doing? What did the sound sound like? Any context helps…" id="desc-{{ rec.id }}"></textarea>
+        <div class="describe-actions">
+          <button class="submit-btn" onclick="submitDesc({{ rec.id }})">Classify</button>
+          <span class="submitting-msg" id="msg-{{ rec.id }}">Classifying…</span>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="icon">🐱</div>
+  <p>No recordings yet. Go record Jack!</p>
+</div>
+{% endif %}
+
+<script>
+  function filter(cat, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.querySelectorAll('.rec-card').forEach(card => {
+      if (cat === 'all') {
+        card.style.display = '';
+      } else if (cat === 'pending') {
+        card.style.display = card.dataset.complete === '0' ? '' : 'none';
+      } else {
+        card.style.display = card.dataset.cat === cat ? '' : 'none';
+      }
+    });
+  }
+
+  async function submitDesc(id) {
+    const ta = document.getElementById('desc-' + id);
+    const desc = ta.value.trim();
+    if (!desc) { ta.focus(); return; }
+
+    const btn = ta.closest('.describe-form').querySelector('.submit-btn');
+    const msg = document.getElementById('msg-' + id);
+    btn.disabled = true;
+    msg.style.display = 'inline';
+
+    try {
+      const res = await fetch('/api/describe/' + id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: desc })
+      });
+      const data = await res.json();
+
+      const card = document.getElementById('card-' + id);
+      card.dataset.cat = data.category || 'pending';
+      card.classList.remove('incomplete');
+
+      // rebuild card header badge
+      const meta = card.querySelector('.rec-meta');
+      const catColors = {
+        hungry: 'cat-hungry', greeting: 'cat-greeting', distressed: 'cat-distressed',
+        bonding: 'cat-bonding', hunting: 'cat-hunting'
+      };
+      const confClass = { high: 'conf-high', medium: 'conf-medium', low: 'conf-low' };
+      meta.innerHTML = `
+        <span class="category-badge ${catColors[data.category] || 'cat-pending'}">
+          <span class="confidence-dot ${confClass[data.confidence] || ''}"></span>
+          ${data.label || data.category}
+        </span>`;
+
+      // add description block
+      const form = document.getElementById('form-' + id);
+      const descBlock = document.createElement('div');
+      descBlock.className = 'rec-description';
+      descBlock.textContent = desc;
+      card.insertBefore(descBlock, form);
+
+      if (data.reasoning) {
+        const reasonEl = document.createElement('p');
+        reasonEl.className = 'rec-reasoning';
+        reasonEl.textContent = `"${data.reasoning}"`;
+        card.insertBefore(reasonEl, form);
+      }
+
+      card.querySelector('.pending-label')?.remove();
+      form.remove();
+    } catch (e) {
+      btn.disabled = false;
+      msg.style.display = 'none';
+      alert('Classification failed. Try again.');
+    }
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>JackSpeak</title>
+<style>
+:root {
+  --bg:      #080b10;
+  --surface: #111827;
+  --border:  #1f2937;
+  --p:       #4fc3f7;
+  --p2:      #0ea5e9;
+  --accent:  #f59e0b;
+  --red:     #ef4444;
+  --green:   #22c55e;
+  --text:    #f1f5f9;
+  --muted:   #64748b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 16px 48px;
+}
+.logo {
+  font-size: 28px; font-weight: 900; letter-spacing: -1px;
+  color: var(--p); margin-bottom: 4px;
+}
+.logo span { color: var(--accent); }
+.sub { font-size: 12px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 36px; }
+
+/* Record button */
+.record-wrap {
+  position: relative; width: 160px; height: 160px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 24px;
+}
+.record-ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid rgba(79,195,247,0.2);
+  transition: all 0.3s;
+}
+.record-ring.pulse {
+  animation: ring-pulse 1s ease-in-out infinite;
+  border-color: var(--red);
+}
+@keyframes ring-pulse {
+  0%,100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(1.12); opacity: 0.5; }
+}
+.record-btn {
+  width: 120px; height: 120px; border-radius: 50%;
+  border: none; cursor: pointer;
+  background: radial-gradient(circle at 38% 32%, #1e3a5f, #0a1628);
+  box-shadow: 0 0 0 2px rgba(79,195,247,0.3), 0 8px 32px rgba(0,0,0,0.6);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; transition: all 0.2s;
+}
+.record-btn:active { transform: scale(0.95); }
+.record-btn.recording {
+  background: radial-gradient(circle at 38% 32%, #3d0f0f, #1a0505);
+  box-shadow: 0 0 0 2px rgba(239,68,68,0.5), 0 0 40px rgba(239,68,68,0.3), 0 8px 32px rgba(0,0,0,0.6);
+}
+.mic-icon { font-size: 36px; }
+.btn-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.record-btn.recording .btn-label { color: var(--red); }
+
+/* Timer */
+.timer { font-size: 22px; font-weight: 700; color: var(--muted); margin-bottom: 28px; font-variant-numeric: tabular-nums; }
+.timer.active { color: var(--red); }
+
+/* Waveform */
+.waveform {
+  width: 100%; max-width: 360px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 3px; margin-bottom: 28px;
+}
+.wave-bar {
+  width: 4px; border-radius: 2px;
+  background: var(--border); height: 8px;
+  transition: height 0.1s, background 0.1s;
+}
+.wave-bar.active { background: var(--p); }
+
+/* Description panel */
+.desc-panel {
+  width: 100%; max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px;
+  margin-bottom: 16px;
+  display: none;
+}
+.desc-panel.show { display: block; }
+.desc-label {
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); font-weight: 700; margin-bottom: 12px;
+}
+.desc-textarea {
+  width: 100%; min-height: 100px; resize: none;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); font-family: inherit; font-size: 15px;
+  padding: 12px; line-height: 1.5; outline: none;
+  transition: border-color 0.2s;
+}
+.desc-textarea:focus { border-color: var(--p); }
+.desc-textarea::placeholder { color: var(--muted); }
+.voice-row {
+  display: flex; gap: 10px; margin-top: 12px;
+}
+.voice-btn {
+  flex: 1; padding: 12px;
+  background: rgba(79,195,247,0.08);
+  border: 1px solid rgba(79,195,247,0.25);
+  border-radius: 10px; color: var(--p);
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+  transition: all 0.2s;
+}
+.voice-btn:hover { background: rgba(79,195,247,0.15); }
+.voice-btn.listening { background: rgba(239,68,68,0.1); border-color: var(--red); color: var(--red); animation: ring-pulse 1s infinite; }
+.skip-btn {
+  flex: 0 0 auto; padding: 12px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px; color: var(--muted);
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+}
+
+/* Submit */
+.submit-btn {
+  width: 100%; max-width: 400px; padding: 18px;
+  background: var(--p2); border: none; border-radius: 14px;
+  color: #fff; font-family: inherit; font-size: 15px; font-weight: 800;
+  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+  transition: all 0.2s; margin-bottom: 12px;
+  display: none;
+}
+.submit-btn.show { display: block; }
+.submit-btn:active { transform: scale(0.98); }
+.submit-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* Result card */
+.result {
+  width: 100%; max-width: 400px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; margin-bottom: 20px;
+  display: none; text-align: center;
+}
+.result.show { display: block; }
+.result-cat {
+  font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+}
+.result-label {
+  font-size: 22px; font-weight: 800; color: var(--p); margin-bottom: 10px;
+}
+.result-reasoning { font-size: 14px; color: var(--muted); line-height: 1.55; margin-bottom: 12px; }
+.confidence-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 6px;
+}
+.conf-high { background: var(--green); }
+.conf-medium { background: var(--accent); }
+.conf-low { background: var(--red); }
+.result-conf { font-size: 12px; color: var(--muted); }
+
+/* New recording btn */
+.new-btn {
+  width: 100%; max-width: 400px; padding: 14px;
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 12px; color: var(--muted);
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+  transition: all 0.2s; display: none; margin-bottom: 20px;
+}
+.new-btn.show { display: block; }
+.new-btn:hover { border-color: var(--p); color: var(--p); }
+
+/* Stats bar */
+.stats-bar {
+  width: 100%; max-width: 400px;
+  display: flex; gap: 12px; margin-top: 8px;
+}
+.stat-chip {
+  flex: 1; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px; text-align: center;
+}
+.stat-n { font-size: 22px; font-weight: 800; color: var(--text); }
+.stat-l { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+
+/* Review link */
+.review-link {
+  margin-top: 24px; font-size: 12px; color: var(--muted);
+  text-decoration: none; letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.review-link:hover { color: var(--p); }
+</style>
+</head>
+<body>
+
+<div class="logo">Jack<span>Speak</span></div>
+<div class="sub">Cat Vocalization Interpreter</div>
+
+<!-- Record button -->
+<div class="record-wrap">
+  <div class="record-ring" id="ring"></div>
+  <button class="record-btn" id="recordBtn" onclick="toggleRecord()">
+    <span class="mic-icon" id="micIcon">🎙️</span>
+    <span class="btn-label" id="btnLabel">Hold to Record</span>
+  </button>
+</div>
+
+<div class="timer" id="timer">0:00</div>
+
+<!-- Waveform -->
+<div class="waveform" id="waveform">
+  <div class="wave-bar" id="b0"></div>
+  <div class="wave-bar" id="b1"></div>
+  <div class="wave-bar" id="b2"></div>
+  <div class="wave-bar" id="b3"></div>
+  <div class="wave-bar" id="b4"></div>
+  <div class="wave-bar" id="b5"></div>
+  <div class="wave-bar" id="b6"></div>
+  <div class="wave-bar" id="b7"></div>
+  <div class="wave-bar" id="b8"></div>
+  <div class="wave-bar" id="b9"></div>
+  <div class="wave-bar" id="b10"></div>
+  <div class="wave-bar" id="b11"></div>
+  <div class="wave-bar" id="b12"></div>
+  <div class="wave-bar" id="b13"></div>
+  <div class="wave-bar" id="b14"></div>
+  <div class="wave-bar" id="b15"></div>
+</div>
+
+<!-- Description panel -->
+<div class="desc-panel" id="descPanel">
+  <div class="desc-label">What was Jack doing? What did the sound seem like?</div>
+  <textarea class="desc-textarea" id="descText"
+    placeholder="e.g. Jack was sitting by his empty bowl, hadn't eaten in 4 hours. Short sharp repeated meow, getting louder. He kept looking at me then the bowl."></textarea>
+  <div class="voice-row">
+    <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤 Speak It</button>
+    <button class="skip-btn" onclick="skipDescription()">Skip for now</button>
+  </div>
+</div>
+
+<!-- Submit -->
+<button class="submit-btn" id="submitBtn" onclick="submitRecording()">
+  Analyze What Jack Said
+</button>
+
+<!-- Result -->
+<div class="result" id="resultCard">
+  <div class="result-cat" id="resultCat">Category</div>
+  <div class="result-label" id="resultLabel">—</div>
+  <div class="result-reasoning" id="resultReasoning"></div>
+  <div class="result-conf"><span class="confidence-dot" id="confDot"></span><span id="confText"></span></div>
+</div>
+
+<button class="new-btn" id="newBtn" onclick="resetAll()">+ New Recording</button>
+
+<!-- Stats -->
+<div class="stats-bar">
+  <div class="stat-chip"><div class="stat-n" id="statTotal">0</div><div class="stat-l">Total</div></div>
+  <div class="stat-chip"><div class="stat-n" id="statLabeled">0</div><div class="stat-l">Labeled</div></div>
+  <div class="stat-chip"><div class="stat-n" id="statPending">0</div><div class="stat-l">Pending</div></div>
+</div>
+
+<a class="review-link" href="/review">View All Recordings →</a>
+
+<script>
+let mediaRecorder = null;
+let audioChunks   = [];
+let stream        = null;
+let analyser      = null;
+let audioCtx      = null;
+let animFrame     = null;
+let timerInterval = null;
+let startTime     = null;
+let isRecording   = false;
+let currentBlob   = null;
+let recognition   = null;
+
+const bars = Array.from({length: 16}, (_, i) => document.getElementById(`b${i}`));
+
+// ── Waveform animation ────────────────────────────────
+function startWaveform() {
+  const dataArr = new Uint8Array(analyser.frequencyBinCount);
+  function draw() {
+    analyser.getByteFrequencyData(dataArr);
+    const step = Math.floor(dataArr.length / 16);
+    bars.forEach((bar, i) => {
+      const val = dataArr[i * step] || 0;
+      const h   = Math.max(4, Math.min(48, (val / 255) * 48));
+      bar.style.height    = h + 'px';
+      bar.classList.add('active');
+    });
+    animFrame = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function stopWaveform() {
+  cancelAnimationFrame(animFrame);
+  bars.forEach(b => { b.style.height = '8px'; b.classList.remove('active'); });
+}
+
+// ── Timer ─────────────────────────────────────────────
+function startTimer() {
+  startTime = Date.now();
+  const el = document.getElementById('timer');
+  el.classList.add('active');
+  timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now() - startTime) / 1000);
+    el.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  }, 500);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  document.getElementById('timer').classList.remove('active');
+}
+
+// ── Record ────────────────────────────────────────────
+async function toggleRecord() {
+  if (isRecording) {
+    stopRecording();
+  } else {
+    await startRecording();
+  }
+}
+
+async function startRecording() {
+  try {
+    stream   = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    audioCtx.createMediaStreamSource(stream).connect(analyser);
+
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' :
+                     MediaRecorder.isTypeSupported('audio/mp4')  ? 'audio/mp4'  : '';
+    mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    audioChunks   = [];
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = onRecordingStop;
+    mediaRecorder.start();
+
+    isRecording = true;
+    document.getElementById('recordBtn').classList.add('recording');
+    document.getElementById('ring').classList.add('pulse');
+    document.getElementById('micIcon').textContent = '⏹️';
+    document.getElementById('btnLabel').textContent = 'Tap to Stop';
+    startWaveform();
+    startTimer();
+  } catch(e) {
+    alert('Microphone access needed. Please allow it in your browser settings.');
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  stream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  isRecording = false;
+  stopWaveform();
+  stopTimer();
+  document.getElementById('recordBtn').classList.remove('recording');
+  document.getElementById('ring').classList.remove('pulse');
+  document.getElementById('micIcon').textContent = '🎙️';
+  document.getElementById('btnLabel').textContent = 'Hold to Record';
+}
+
+function onRecordingStop() {
+  currentBlob = new Blob(audioChunks, { type: audioChunks[0]?.type || 'audio/webm' });
+  document.getElementById('descPanel').classList.add('show');
+  document.getElementById('submitBtn').classList.add('show');
+  document.getElementById('descText').focus();
+}
+
+// ── Voice-to-text ─────────────────────────────────────
+function toggleVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Voice input not supported in this browser. Please type your description.'); return; }
+
+  if (recognition) {
+    recognition.stop(); recognition = null;
+    document.getElementById('voiceBtn').classList.remove('listening');
+    document.getElementById('voiceBtn').textContent = '🎤 Speak It';
+    return;
+  }
+
+  recognition = new SR();
+  recognition.continuous   = true;
+  recognition.interimResults = true;
+  recognition.lang         = 'en-US';
+
+  const ta = document.getElementById('descText');
+  const base = ta.value;
+
+  recognition.onresult = e => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    ta.value = base + final + interim;
+  };
+  recognition.onend = () => {
+    recognition = null;
+    document.getElementById('voiceBtn').classList.remove('listening');
+    document.getElementById('voiceBtn').textContent = '🎤 Speak It';
+  };
+  recognition.start();
+  document.getElementById('voiceBtn').classList.add('listening');
+  document.getElementById('voiceBtn').textContent = '⏹ Stop Listening';
+}
+
+function skipDescription() {
+  if (recognition) { recognition.stop(); recognition = null; }
+  submitRecording();
+}
+
+// ── Submit ────────────────────────────────────────────
+async function submitRecording() {
+  if (!currentBlob) return;
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing…';
+
+  const fd = new FormData();
+  fd.append('audio', currentBlob, 'jack_' + Date.now() + '.webm');
+  fd.append('description', document.getElementById('descText').value.trim());
+
+  try {
+    const res  = await fetch('/api/upload', { method: 'POST', body: fd });
+    const data = await res.json();
+    showResult(data);
+    loadStats();
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Analyze What Jack Said';
+    alert('Upload failed. Check your connection.');
+  }
+}
+
+function showResult(data) {
+  document.getElementById('descPanel').classList.remove('show');
+  document.getElementById('submitBtn').classList.remove('show');
+
+  const card = document.getElementById('resultCard');
+  card.classList.add('show');
+
+  if (data.category) {
+    document.getElementById('resultCat').textContent   = data.category.toUpperCase();
+    document.getElementById('resultLabel').textContent  = data.label || data.category;
+    document.getElementById('resultReasoning').textContent = data.reasoning || '';
+    const dot = document.getElementById('confDot');
+    dot.className = 'confidence-dot conf-' + (data.confidence || 'medium');
+    document.getElementById('confText').textContent = (data.confidence || 'medium') + ' confidence';
+  } else {
+    document.getElementById('resultCat').textContent    = 'SAVED';
+    document.getElementById('resultLabel').textContent   = 'Recording saved';
+    document.getElementById('resultReasoning').textContent = 'No description provided — add one from the review page to get Jack\'s meaning.';
+    document.getElementById('confText').textContent = '';
+  }
+  document.getElementById('newBtn').classList.add('show');
+}
+
+function resetAll() {
+  currentBlob = null; audioChunks = [];
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('newBtn').classList.remove('show');
+  document.getElementById('descPanel').classList.remove('show');
+  document.getElementById('submitBtn').classList.remove('show');
+  document.getElementById('descText').value = '';
+  document.getElementById('timer').textContent = '0:00';
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = false;
+  btn.textContent = 'Analyze What Jack Said';
+}
+
+// ── Stats ─────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const d = await fetch('/api/stats').then(r => r.json());
+    document.getElementById('statTotal').textContent   = d.total   || 0;
+    document.getElementById('statLabeled').textContent = d.complete || 0;
+    document.getElementById('statPending').textContent = d.incomplete || 0;
+  } catch(_) {}
+}
+
+loadStats();
+</script>
+</body>
+</html>

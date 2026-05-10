@@ -1,3 +1,5 @@
 flask
+anthropic
 python-dotenv
 requests
+
