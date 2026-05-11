@@ -73,16 +73,23 @@ recordings(id, cat_id, filename, audio_ext, description,
 - [x] Journal timeline per cat (grouped by day)
 - [x] Common / Unusual summaries on cat profile
 - [x] Railway deployment live
+- [x] Photo/video upload layer (5 categories: face, posture, movement, body, environment)
+- [x] Owner rating per event (normal / a little unusual / very unusual / not sure)
+- [x] Printable vet report at /cats/<id>/report (@media print, PDF-ready)
+- [x] Auto-generated vet questions based on pattern data
+- [x] 7-day pattern snapshot on cat profile (night vocalizations, litter, food, discomfort)
+- [x] Owner rating badges in journal and review pages
+- [x] classify() tone updated to observational language (not "your cat wants X")
 
 ## What's Next
 - [ ] Per-cat baseline comparison ("unusual for Luna but normal range for most cats")
 - [ ] Weekly digest / trend summary
 - [ ] Push notifications for repeated concern flags
-- [ ] Export journal as PDF for vet visits
+- [ ] Persistent photo storage (Railway ephemeral FS — consider R2 or S3)
 
 ---
 
 ## Last Session
-Built full V2: cat profiles, bubble tag UI, journal timeline, concern flag engine,
-Railway deployment. Live at jackspeak-production.up.railway.app.
+Built V3: photo layer, owner ratings, printable vet report, 7-day pattern snapshot,
+vet questions auto-generated, observational AI tone. Pushed to Railway.
 *Updated: 2026-05-10*
