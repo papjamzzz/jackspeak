@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>JackSpeak — Cats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#12121a; --surface2:#1a1a26; --border:#2a2a3a;
+    --accent:#7c5cfc; --accent2:#a78bfa; --text:#e8e8f0; --muted:#6b6b80;
+    --success:#34d399; --warn:#fbbf24; --error:#f87171;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh; padding-bottom:60px; }
+
+  nav {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px; border-bottom:1px solid var(--border);
+    position:sticky; top:0; background:var(--bg); z-index:10;
+  }
+  .nav-brand { display:flex; align-items:center; gap:10px; }
+  .nav-brand img { width:28px; height:28px; border-radius:7px; object-fit:contain; }
+  .nav-brand span { font-size:18px; font-weight:700; letter-spacing:-0.5px; }
+  .nav-brand em { color:var(--accent2); font-style:normal; }
+  .nav-links { display:flex; gap:2px; }
+  .nav-link { color:var(--muted); text-decoration:none; font-size:13px; font-weight:500;
+               padding:6px 11px; border-radius:7px; transition:all 0.15s; }
+  .nav-link:hover,.nav-link.active { color:var(--text); background:var(--surface2); }
+
+  main { max-width:480px; margin:0 auto; padding:24px 18px; }
+
+  h2 { font-size:20px; font-weight:700; margin-bottom:20px; }
+
+  /* Cat cards */
+  .cat-list { display:flex; flex-direction:column; gap:12px; margin-bottom:28px; }
+  .cat-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:18px; display:flex; align-items:center; gap:16px;
+    text-decoration:none; transition:border-color 0.15s;
+  }
+  .cat-card:hover { border-color:var(--accent); }
+  .cat-avatar {
+    width:52px; height:52px; border-radius:50%; background:var(--surface2);
+    border:2px solid var(--border); display:flex; align-items:center;
+    justify-content:center; font-size:24px; flex-shrink:0;
+  }
+  .cat-info { flex:1; min-width:0; }
+  .cat-name { font-size:16px; font-weight:700; margin-bottom:4px; color:var(--text); }
+  .cat-meta { font-size:12px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; }
+  .cat-meta span { display:flex; align-items:center; gap:4px; }
+  .rec-count {
+    background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+    padding:4px 10px; font-size:12px; color:var(--muted); font-weight:600; white-space:nowrap;
+  }
+  .cat-arrow { color:var(--muted); font-size:18px; }
+
+  .empty-cats {
+    background:var(--surface); border:1.5px dashed var(--border); border-radius:14px;
+    padding:40px 24px; text-align:center; color:var(--muted); margin-bottom:28px;
+  }
+  .empty-cats .icon { font-size:48px; margin-bottom:12px; }
+  .empty-cats p { font-size:14px; line-height:1.6; }
+
+  /* Add cat section */
+  .add-section { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .add-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; cursor:pointer; user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .add-header-left { display:flex; align-items:center; gap:10px; }
+  .add-header-icon { font-size:20px; }
+  .add-header-text { font-size:15px; font-weight:600; }
+  .add-toggle { color:var(--muted); font-size:20px; transition:transform 0.2s; }
+  .add-toggle.open { transform:rotate(45deg); }
+
+  .add-form { padding:0 20px 20px; display:none; }
+  .add-form.show { display:block; }
+
+  .field { margin-bottom:16px; }
+  .field-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+  .field input, .field select, .field textarea {
+    width:100%; background:var(--surface2); border:1.5px solid var(--border);
+    border-radius:10px; color:var(--text); font-family:'Inter',sans-serif;
+    font-size:14px; padding:11px 14px; outline:none; transition:border-color 0.15s;
+    appearance:none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color:var(--accent); }
+  .field input::placeholder, .field textarea::placeholder { color:var(--muted); }
+  .field select option { background:#1a1a26; }
+  .field textarea { resize:none; min-height:64px; line-height:1.5; }
+
+  .field-row { display:flex; gap:12px; }
+  .field-row .field { flex:1; }
+
+  .save-btn {
+    width:100%; background:var(--accent); border:none; color:#fff;
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:700;
+    padding:14px; border-radius:10px; cursor:pointer; transition:opacity 0.15s;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  .save-btn:hover { opacity:0.87; }
+  .save-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+  /* Danger zone */
+  .cat-actions {
+    display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);
+  }
+  .btn-danger {
+    background:transparent; border:1.5px solid var(--error); color:var(--error);
+    font-family:'Inter',sans-serif; font-size:12px; font-weight:600;
+    padding:7px 14px; border-radius:8px; cursor:pointer; transition:all 0.15s;
+  }
+  .btn-danger:hover { background:#f8717115; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <img src="/static/logo.png" alt="" onerror="this.style.display='none'">
+    <span>Jack<em>Speak</em></span>
+  </div>
+  <div class="nav-links">
+    <a href="/" class="nav-link">Record</a>
+    <a href="/cats" class="nav-link active">Cats</a>
+    <a href="/review" class="nav-link">Review</a>
+  </div>
+</nav>
+
+<main>
+  <h2>Your Cats</h2>
+
+  {% if cats %}
+  <div class="cat-list">
+    {% for cat in cats %}
+    <a class="cat-card" href="/cats/{{ cat.id }}">
+      <div class="cat-avatar">🐱</div>
+      <div class="cat-info">
+        <div class="cat-name">{{ cat.name }}</div>
+        <div class="cat-meta">
+          {% if cat.breed %}<span>{{ cat.breed }}</span>{% endif %}
+          {% if cat.age_years %}<span>{{ cat.age_years|int if cat.age_years == cat.age_years|int else cat.age_years }} yrs</span>{% endif %}
+          <span>{{ cat.indoor_outdoor }}</span>
+        </div>
+      </div>
+      <div class="rec-count">{{ cat.rec_count }} recordings</div>
+      <div class="cat-arrow">›</div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-cats">
+    <div class="icon">🐾</div>
+    <p>No cats yet. Add your first cat below<br>— takes 30 seconds.</p>
+  </div>
+  {% endif %}
+
+  <!-- Add Cat -->
+  <div class="add-section" id="add-section">
+    <div class="add-header" onclick="toggleForm()">
+      <div class="add-header-left">
+        <span class="add-header-icon">➕</span>
+        <span class="add-header-text">Add a Cat</span>
+      </div>
+      <span class="add-toggle" id="add-toggle">+</span>
+    </div>
+    <div class="add-form" id="add-form">
+      <div class="field">
+        <div class="field-label">Name *</div>
+        <input type="text" id="f-name" placeholder="e.g. Jack" maxlength="40">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <div class="field-label">Age (years)</div>
+          <input type="number" id="f-age" placeholder="e.g. 3" min="0" max="30" step="0.5">
+        </div>
+        <div class="field">
+          <div class="field-label">Indoor / Outdoor</div>
+          <select id="f-indoor">
+            <option value="indoor">Indoor</option>
+            <option value="outdoor">Outdoor</option>
+            <option value="indoor/outdoor">Both</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Breed (optional)</div>
+        <input type="text" id="f-breed" placeholder="e.g. Maine Coon, Domestic shorthair">
+      </div>
+      <div class="field">
+        <div class="field-label">Health notes (optional)</div>
+        <textarea id="f-health" placeholder="Any known conditions, allergies, meds…"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label">Vocal habits (optional)</div>
+        <textarea id="f-vocal" placeholder="e.g. Usually quiet, loud before dinner, chatty in mornings…"></textarea>
+      </div>
+      <button class="save-btn" id="add-btn" onclick="addCat()">Add Cat →</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+function toggleForm() {
+  const form   = document.getElementById('add-form');
+  const toggle = document.getElementById('add-toggle');
+  const open   = form.classList.toggle('show');
+  toggle.classList.toggle('open', open);
+  if (open) document.getElementById('f-name').focus();
+}
+
+// Auto-open if no cats
+{% if not cats %}toggleForm();{% endif %}
+
+async function addCat() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { document.getElementById('f-name').focus(); return; }
+
+  const btn = document.getElementById('add-btn');
+  btn.disabled = true; btn.textContent = 'Adding…';
+
+  try {
+    const cat = await fetch('/api/cats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        age_years:      parseFloat(document.getElementById('f-age').value) || null,
+        breed:          document.getElementById('f-breed').value.trim(),
+        indoor_outdoor: document.getElementById('f-indoor').value,
+        health_notes:   document.getElementById('f-health').value.trim(),
+        vocal_notes:    document.getElementById('f-vocal').value.trim(),
+      }),
+    }).then(r => r.json());
+
+    if (cat.error) throw new Error(cat.error);
+    window.location.href = `/cats/${cat.id}`;
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Add Cat →';
+    alert('Could not add cat. Try again.');
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT') addCat();
+});
+</script>
+</body>
+</html>

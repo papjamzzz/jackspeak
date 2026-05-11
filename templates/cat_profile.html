@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>JackSpeak — {{ cat.name }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#12121a; --surface2:#1a1a26; --border:#2a2a3a;
+    --accent:#7c5cfc; --accent2:#a78bfa; --text:#e8e8f0; --muted:#6b6b80;
+    --success:#34d399; --warn:#fbbf24; --error:#f87171;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh; padding-bottom:60px; }
+
+  nav {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px; border-bottom:1px solid var(--border);
+    position:sticky; top:0; background:var(--bg); z-index:10;
+  }
+  .nav-brand { display:flex; align-items:center; gap:10px; }
+  .nav-brand img { width:28px; height:28px; border-radius:7px; object-fit:contain; }
+  .nav-brand span { font-size:18px; font-weight:700; letter-spacing:-0.5px; }
+  .nav-brand em { color:var(--accent2); font-style:normal; }
+  .nav-links { display:flex; gap:2px; }
+  .nav-link { color:var(--muted); text-decoration:none; font-size:13px; font-weight:500;
+               padding:6px 11px; border-radius:7px; transition:all 0.15s; }
+  .nav-link:hover { color:var(--text); background:var(--surface2); }
+
+  main { max-width:480px; margin:0 auto; padding:24px 18px; }
+
+  /* Profile header */
+  .profile-header {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:20px; margin-bottom:16px;
+  }
+  .profile-top { display:flex; align-items:center; gap:16px; margin-bottom:14px; }
+  .cat-avatar { width:56px; height:56px; border-radius:50%; background:var(--surface2);
+                border:2px solid var(--border); display:flex; align-items:center;
+                justify-content:center; font-size:26px; flex-shrink:0; }
+  .cat-name-area { flex:1; }
+  .cat-name { font-size:22px; font-weight:700; line-height:1; margin-bottom:4px; }
+  .cat-sub { font-size:13px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; }
+  .edit-btn {
+    background:transparent; border:1.5px solid var(--border); color:var(--muted);
+    font-family:'Inter',sans-serif; font-size:12px; font-weight:600;
+    padding:6px 14px; border-radius:8px; cursor:pointer; transition:all 0.15s;
+    white-space:nowrap;
+  }
+  .edit-btn:hover { color:var(--text); border-color:var(--accent); }
+  .rec-total { font-size:12px; color:var(--muted); }
+  .rec-total strong { color:var(--accent2); }
+
+  /* Notes */
+  .note-pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .note-pill { background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+               padding:4px 10px; font-size:12px; color:var(--muted); }
+
+  /* Edit form (hidden by default) */
+  .edit-form { display:none; border-top:1px solid var(--border); padding-top:16px; margin-top:4px; }
+  .edit-form.show { display:block; }
+  .field { margin-bottom:14px; }
+  .field-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; }
+  .field input, .field select, .field textarea {
+    width:100%; background:var(--surface2); border:1.5px solid var(--border);
+    border-radius:10px; color:var(--text); font-family:'Inter',sans-serif;
+    font-size:14px; padding:10px 14px; outline:none; transition:border-color 0.15s; appearance:none;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus { border-color:var(--accent); }
+  .field input::placeholder,.field textarea::placeholder { color:var(--muted); }
+  .field select option { background:#1a1a26; }
+  .field textarea { resize:none; min-height:60px; line-height:1.5; }
+  .field-row { display:flex; gap:10px; }
+  .field-row .field { flex:1; }
+  .edit-actions { display:flex; gap:10px; }
+  .btn-save {
+    flex:1; background:var(--accent); border:none; color:#fff;
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:600;
+    padding:12px; border-radius:10px; cursor:pointer; transition:opacity 0.15s;
+  }
+  .btn-save:hover { opacity:0.87; }
+  .btn-cancel {
+    background:transparent; border:1.5px solid var(--border); color:var(--muted);
+    font-family:'Inter',sans-serif; font-size:14px; padding:12px 16px;
+    border-radius:10px; cursor:pointer; transition:all 0.15s;
+  }
+  .btn-cancel:hover { color:var(--text); }
+
+  /* Concern flags */
+  .concern-box {
+    background:#fbbf2410; border:1px solid #fbbf2444; border-radius:12px;
+    padding:16px; margin-bottom:16px;
+  }
+  .concern-title { font-size:11px; font-weight:700; color:var(--warn); text-transform:uppercase;
+                   letter-spacing:0.5px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .concern-msg { font-size:13px; color:#d4a84b; line-height:1.5; margin-bottom:8px; padding-left:8px;
+                 border-left:2px solid #fbbf2466; }
+  .concern-msg:last-of-type { margin-bottom:0; }
+  .concern-footer { font-size:11px; color:var(--muted); line-height:1.5; margin-top:10px;
+                    padding-top:10px; border-top:1px solid var(--border); }
+
+  /* Summary cards */
+  .summary-row { display:flex; gap:12px; margin-bottom:16px; }
+  .summary-card {
+    flex:1; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px;
+  }
+  .summary-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+                   margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+  .tag-cloud { display:flex; flex-wrap:wrap; gap:6px; }
+  .tag-chip {
+    background:var(--surface2); border:1px solid var(--border); border-radius:14px;
+    padding:4px 10px; font-size:12px; color:var(--muted); font-weight:500;
+  }
+  .tag-chip.unusual { background:#fbbf2415; border-color:#fbbf2444; color:#d4a84b; }
+  .empty-tags { font-size:12px; color:var(--muted); font-style:italic; }
+
+  /* Journal */
+  .journal-title { font-size:16px; font-weight:700; margin-bottom:16px; color:var(--text); }
+  .day-group { margin-bottom:24px; }
+  .day-label {
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+    color:var(--muted); margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(--border);
+  }
+  .event-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:14px; margin-bottom:10px; transition:border-color 0.15s;
+  }
+  .event-card:hover { border-color:#3a3a50; }
+
+  .event-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .event-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .event-time { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .cat-badge {
+    display:inline-flex; align-items:center; gap:5px; padding:3px 10px;
+    border-radius:14px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;
+  }
+  .cb-request    { background:#fb923c22; color:#fb923c; }
+  .cb-social     { background:#34d39922; color:#34d399; }
+  .cb-stress     { background:#a78bfa22; color:#a78bfa; }
+  .cb-discomfort { background:#f8717122; color:#f87171; }
+  .cb-unusual    { background:#fbbf2422; color:#fbbf24; }
+  .cb-none       { background:var(--surface2); color:var(--muted); }
+  .conf-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+  .conf-high { background:var(--success); }
+  .conf-medium { background:var(--warn); }
+  .conf-low { background:var(--error); }
+
+  .fb-badge { font-size:11px; padding:2px 8px; border-radius:10px; font-weight:600; }
+  .fb-right  { background:#34d39920; color:var(--success); }
+  .fb-close  { background:#fbbf2420; color:var(--warn); }
+  .fb-wrong  { background:#f8717120; color:var(--error); }
+  .fb-unsure { background:var(--surface2); color:var(--muted); }
+
+  .event-desc { font-size:13px; color:var(--muted); font-style:italic; margin-bottom:8px; line-height:1.5; }
+  .event-reasoning { font-size:12px; color:var(--muted); margin-bottom:8px; line-height:1.5; }
+
+  .tag-row { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+  .mini-tag {
+    background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+    padding:3px 8px; font-size:11px; color:var(--muted); font-weight:500;
+  }
+  .mini-tag.ctx { border-color:var(--accent); color:var(--accent2); background:#7c5cfc15; }
+
+  audio {
+    width:100%; height:32px; margin-top:10px;
+    filter:invert(1) hue-rotate(180deg) brightness(0.75); border-radius:6px;
+  }
+
+  .no-events { text-align:center; padding:40px 20px; color:var(--muted); font-size:14px; }
+  .no-events .icon { font-size:40px; margin-bottom:12px; }
+
+  .record-cta {
+    display:block; text-decoration:none; text-align:center;
+    background:var(--accent); color:#fff; font-weight:700; font-size:14px;
+    padding:14px; border-radius:12px; margin-bottom:24px; transition:opacity 0.15s;
+  }
+  .record-cta:hover { opacity:0.87; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <img src="/static/logo.png" alt="" onerror="this.style.display='none'">
+    <span>Jack<em>Speak</em></span>
+  </div>
+  <div class="nav-links">
+    <a href="/" class="nav-link">Record</a>
+    <a href="/cats" class="nav-link">← Cats</a>
+    <a href="/review" class="nav-link">Review</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- Profile header -->
+  <div class="profile-header">
+    <div class="profile-top">
+      <div class="cat-avatar">🐱</div>
+      <div class="cat-name-area">
+        <div class="cat-name">{{ cat.name }}</div>
+        <div class="cat-sub">
+          {% if cat.breed %}<span>{{ cat.breed }}</span>{% endif %}
+          {% if cat.age_years %}<span>{{ cat.age_years }} yrs</span>{% endif %}
+          <span>{{ cat.indoor_outdoor }}</span>
+        </div>
+      </div>
+      <button class="edit-btn" onclick="toggleEdit()">Edit</button>
+    </div>
+
+    <div class="rec-total">
+      <strong>{{ total_recordings }}</strong> recordings in the journal
+    </div>
+
+    {% if cat.health_notes or cat.vocal_notes %}
+    <div class="note-pills">
+      {% if cat.health_notes %}<div class="note-pill">🏥 {{ cat.health_notes }}</div>{% endif %}
+      {% if cat.vocal_notes %}<div class="note-pill">🎙️ {{ cat.vocal_notes }}</div>{% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Edit form -->
+    <div class="edit-form" id="edit-form">
+      <div class="field">
+        <div class="field-label">Name</div>
+        <input type="text" id="e-name" value="{{ cat.name }}">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <div class="field-label">Age (years)</div>
+          <input type="number" id="e-age" value="{{ cat.age_years or '' }}" min="0" max="30" step="0.5">
+        </div>
+        <div class="field">
+          <div class="field-label">Indoor / Outdoor</div>
+          <select id="e-indoor">
+            <option value="indoor" {% if cat.indoor_outdoor=='indoor' %}selected{% endif %}>Indoor</option>
+            <option value="outdoor" {% if cat.indoor_outdoor=='outdoor' %}selected{% endif %}>Outdoor</option>
+            <option value="indoor/outdoor" {% if cat.indoor_outdoor=='indoor/outdoor' %}selected{% endif %}>Both</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Breed</div>
+        <input type="text" id="e-breed" value="{{ cat.breed or '' }}">
+      </div>
+      <div class="field">
+        <div class="field-label">Health notes</div>
+        <textarea id="e-health">{{ cat.health_notes or '' }}</textarea>
+      </div>
+      <div class="field">
+        <div class="field-label">Vocal habits</div>
+        <textarea id="e-vocal">{{ cat.vocal_notes or '' }}</textarea>
+      </div>
+      <div class="edit-actions">
+        <button class="btn-save" onclick="saveCat()">Save</button>
+        <button class="btn-cancel" onclick="toggleEdit()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Concern flags -->
+  {% if concerns %}
+  <div class="concern-box">
+    <div class="concern-title">⚠ Worth Watching</div>
+    {% for c in concerns %}
+    <div class="concern-msg">{{ c }}</div>
+    {% endfor %}
+    <div class="concern-footer">These patterns may be worth monitoring. If behavior continues or you notice changes in appetite, litter habits, hiding, or weakness — consider contacting a vet.</div>
+  </div>
+  {% endif %}
+
+  <!-- Common / Unusual summary -->
+  <div class="summary-row">
+    <div class="summary-card">
+      <div class="summary-title" style="color:var(--success)">✓ Common for {{ cat.name }}</div>
+      <div class="tag-cloud">
+        {% if common_tags %}
+          {% for tag in common_tags %}
+          <span class="tag-chip">{{ tag }}</span>
+          {% endfor %}
+        {% else %}
+          <span class="empty-tags">Record more to see patterns.</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-title" style="color:var(--warn)">⚡ Unusual lately</div>
+      <div class="tag-cloud">
+        {% if unusual_recent %}
+          {% for tag in unusual_recent %}
+          <span class="tag-chip unusual">{{ tag }}</span>
+          {% endfor %}
+        {% else %}
+          <span class="empty-tags">Nothing flagged unusual this week.</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick record CTA -->
+  <a href="/" class="record-cta">🎙️ Record {{ cat.name }} Now</a>
+
+  <!-- Journal -->
+  <div class="journal-title">Journal</div>
+
+  {% if journal %}
+    {% for date, events in journal.items() %}
+    <div class="day-group">
+      <div class="day-label">{{ date }}</div>
+      {% for ev in events %}
+      <div class="event-card">
+        <div class="event-top">
+          <div class="event-meta">
+            <span class="event-time">{{ ev.created_at[11:16] }}</span>
+            {% if ev.category %}
+            <span class="cat-badge cb-{{ ev.category }}">
+              {% if ev.confidence %}<span class="conf-dot conf-{{ ev.confidence }}"></span>{% endif %}
+              {{ category_labels.get(ev.category, ev.category) | replace(' / ', ' / ') | truncate(22, True, '…') }}
+            </span>
+            {% else %}
+            <span class="cat-badge cb-none">Unlabeled</span>
+            {% endif %}
+            {% if ev.user_feedback %}
+            <span class="fb-badge fb-{{ ev.user_feedback }}">{{ ev.user_feedback }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if ev.reasoning %}
+        <div class="event-reasoning">"{{ ev.reasoning }}"</div>
+        {% endif %}
+
+        {% if ev.description %}
+        <div class="event-desc">{{ ev.description }}</div>
+        {% endif %}
+
+        {% if ev.detail_tags or ev.global_context %}
+        <div class="tag-row">
+          {% for t in ev.detail_tags %}
+          <span class="mini-tag">{{ t }}</span>
+          {% endfor %}
+          {% for t in ev.global_context %}
+          <span class="mini-tag ctx">{{ t }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <audio controls preload="none" src="/data/recordings/{{ ev.filename }}"></audio>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="no-events">
+    <div class="icon">🎙️</div>
+    <p>No recordings yet. Start recording {{ cat.name }} to build the journal.</p>
+  </div>
+  {% endif %}
+
+</main>
+
+<script>
+const CAT_ID = {{ cat.id }};
+
+function toggleEdit() {
+  document.getElementById('edit-form').classList.toggle('show');
+}
+
+async function saveCat() {
+  const name = document.getElementById('e-name').value.trim();
+  if (!name) return;
+  try {
+    await fetch(`/api/cats/${CAT_ID}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        age_years:      parseFloat(document.getElementById('e-age').value) || null,
+        breed:          document.getElementById('e-breed').value.trim(),
+        indoor_outdoor: document.getElementById('e-indoor').value,
+        health_notes:   document.getElementById('e-health').value.trim(),
+        vocal_notes:    document.getElementById('e-vocal').value.trim(),
+      }),
+    });
+    window.location.reload();
+  } catch(e) { alert('Save failed. Try again.'); }
+}
+</script>
+</body>
+</html>

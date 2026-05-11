@@ -2,501 +2,600 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>JackSpeak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:      #080b10;
-  --surface: #111827;
-  --border:  #1f2937;
-  --p:       #4fc3f7;
-  --p2:      #0ea5e9;
-  --accent:  #f59e0b;
-  --red:     #ef4444;
-  --green:   #22c55e;
-  --text:    #f1f5f9;
-  --muted:   #64748b;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', system-ui, sans-serif;
-  min-height: 100vh;
-  display: flex; flex-direction: column; align-items: center;
-  padding: 24px 16px 48px;
-}
-.logo {
-  font-size: 28px; font-weight: 900; letter-spacing: -1px;
-  color: var(--p); margin-bottom: 4px;
-}
-.logo span { color: var(--accent); }
-.sub { font-size: 12px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 36px; }
+  :root {
+    --bg: #0a0a0f; --surface: #12121a; --surface2: #1a1a26; --border: #2a2a3a;
+    --accent: #7c5cfc; --accent2: #a78bfa; --text: #e8e8f0; --muted: #6b6b80;
+    --success: #34d399; --warn: #fbbf24; --error: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif;
+         min-height: 100vh; padding-bottom: 60px; }
 
-/* Record button */
-.record-wrap {
-  position: relative; width: 160px; height: 160px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 24px;
-}
-.record-ring {
-  position: absolute; inset: 0; border-radius: 50%;
-  border: 2px solid rgba(79,195,247,0.2);
-  transition: all 0.3s;
-}
-.record-ring.pulse {
-  animation: ring-pulse 1s ease-in-out infinite;
-  border-color: var(--red);
-}
-@keyframes ring-pulse {
-  0%,100% { transform: scale(1);   opacity: 1; }
-  50%      { transform: scale(1.12); opacity: 0.5; }
-}
-.record-btn {
-  width: 120px; height: 120px; border-radius: 50%;
-  border: none; cursor: pointer;
-  background: radial-gradient(circle at 38% 32%, #1e3a5f, #0a1628);
-  box-shadow: 0 0 0 2px rgba(79,195,247,0.3), 0 8px 32px rgba(0,0,0,0.6);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 6px; transition: all 0.2s;
-}
-.record-btn:active { transform: scale(0.95); }
-.record-btn.recording {
-  background: radial-gradient(circle at 38% 32%, #3d0f0f, #1a0505);
-  box-shadow: 0 0 0 2px rgba(239,68,68,0.5), 0 0 40px rgba(239,68,68,0.3), 0 8px 32px rgba(0,0,0,0.6);
-}
-.mic-icon { font-size: 36px; }
-.btn-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-.record-btn.recording .btn-label { color: var(--red); }
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg); z-index: 10;
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand img { width: 28px; height: 28px; border-radius: 7px; object-fit: contain; }
+  .nav-brand span { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+  .nav-brand em { color: var(--accent2); font-style: normal; }
+  .nav-links { display: flex; gap: 2px; }
+  .nav-link { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500;
+               padding: 6px 11px; border-radius: 7px; transition: all 0.15s; }
+  .nav-link:hover, .nav-link.active { color: var(--text); background: var(--surface2); }
 
-/* Timer */
-.timer { font-size: 22px; font-weight: 700; color: var(--muted); margin-bottom: 28px; font-variant-numeric: tabular-nums; }
-.timer.active { color: var(--red); }
+  main { max-width: 480px; margin: 0 auto; padding: 24px 18px; }
 
-/* Waveform */
-.waveform {
-  width: 100%; max-width: 360px; height: 48px;
-  display: flex; align-items: center; justify-content: center;
-  gap: 3px; margin-bottom: 28px;
-}
-.wave-bar {
-  width: 4px; border-radius: 2px;
-  background: var(--border); height: 8px;
-  transition: height 0.1s, background 0.1s;
-}
-.wave-bar.active { background: var(--p); }
+  .cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  .cat-row-label { font-size: 11px; color: var(--muted); text-transform: uppercase;
+                   letter-spacing: 0.5px; white-space: nowrap; }
+  .cat-select {
+    flex: 1; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500;
+    padding: 10px 36px 10px 14px; appearance: none; outline: none; transition: border-color 0.15s;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b80' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+  }
+  .cat-select:focus { border-color: var(--accent); }
+  .cat-select option { background: #1a1a26; }
+  .add-cat-link { color: var(--accent2); font-size: 13px; font-weight: 600;
+                  text-decoration: none; white-space: nowrap; }
+  .no-cats-box {
+    background: var(--surface); border: 1.5px dashed var(--border); border-radius: 12px;
+    padding: 20px; text-align: center; color: var(--muted); font-size: 14px;
+    margin-bottom: 28px; line-height: 1.6;
+  }
+  .no-cats-box a { color: var(--accent2); font-weight: 600; text-decoration: none; }
 
-/* Description panel */
-.desc-panel {
-  width: 100%; max-width: 400px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px; padding: 20px;
-  margin-bottom: 16px;
-  display: none;
-}
-.desc-panel.show { display: block; }
-.desc-label {
-  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--muted); font-weight: 700; margin-bottom: 12px;
-}
-.desc-textarea {
-  width: 100%; min-height: 100px; resize: none;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border); border-radius: 10px;
-  color: var(--text); font-family: inherit; font-size: 15px;
-  padding: 12px; line-height: 1.5; outline: none;
-  transition: border-color 0.2s;
-}
-.desc-textarea:focus { border-color: var(--p); }
-.desc-textarea::placeholder { color: var(--muted); }
-.voice-row {
-  display: flex; gap: 10px; margin-top: 12px;
-}
-.voice-btn {
-  flex: 1; padding: 12px;
-  background: rgba(79,195,247,0.08);
-  border: 1px solid rgba(79,195,247,0.25);
-  border-radius: 10px; color: var(--p);
-  font-family: inherit; font-size: 13px; font-weight: 700;
-  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
-  transition: all 0.2s;
-}
-.voice-btn:hover { background: rgba(79,195,247,0.15); }
-.voice-btn.listening { background: rgba(239,68,68,0.1); border-color: var(--red); color: var(--red); animation: ring-pulse 1s infinite; }
-.skip-btn {
-  flex: 0 0 auto; padding: 12px 16px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 10px; color: var(--muted);
-  font-family: inherit; font-size: 12px; font-weight: 700;
-  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
-}
+  .record-area { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-bottom: 32px; }
+  #waveform { width: 100%; height: 60px; border-radius: 10px; background: var(--surface); display: block; }
+  .rec-timer { font-size: 13px; color: var(--muted); letter-spacing: 1px; min-height: 18px; font-variant-numeric: tabular-nums; }
+  .record-btn {
+    width: 84px; height: 84px; border-radius: 50%; border: none; background: var(--accent);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    position: relative; transition: transform 0.1s, background 0.2s;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .record-btn:active { transform: scale(0.93); }
+  .record-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .record-btn .icon { font-size: 30px; line-height: 1; }
+  .pulse-ring {
+    position: absolute; width: 100%; height: 100%; border-radius: 50%;
+    border: 2.5px solid var(--accent); opacity: 0; pointer-events: none;
+  }
+  .is-recording .record-btn { background: var(--error); }
+  .is-recording .pulse-ring { animation: pulse 1.4s ease-out infinite; }
+  @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.55); opacity: 0; } }
+  .rec-label { font-size: 13px; color: var(--muted); }
 
-/* Submit */
-.submit-btn {
-  width: 100%; max-width: 400px; padding: 18px;
-  background: var(--p2); border: none; border-radius: 14px;
-  color: #fff; font-family: inherit; font-size: 15px; font-weight: 800;
-  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
-  transition: all 0.2s; margin-bottom: 12px;
-  display: none;
-}
-.submit-btn.show { display: block; }
-.submit-btn:active { transform: scale(0.98); }
-.submit-btn:disabled { opacity: 0.5; cursor: default; }
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin-bottom: 18px; display: none;
+  }
+  .panel.show { display: block; }
+  .panel-title { font-size: 14px; font-weight: 600; margin-bottom: 14px; }
 
-/* Result card */
-.result {
-  width: 100%; max-width: 400px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 20px; margin-bottom: 20px;
-  display: none; text-align: center;
-}
-.result.show { display: block; }
-.result-cat {
-  font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 8px;
-}
-.result-label {
-  font-size: 22px; font-weight: 800; color: var(--p); margin-bottom: 10px;
-}
-.result-reasoning { font-size: 14px; color: var(--muted); line-height: 1.55; margin-bottom: 12px; }
-.confidence-dot {
-  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-  margin-right: 6px;
-}
-.conf-high { background: var(--green); }
-.conf-medium { background: var(--accent); }
-.conf-low { background: var(--red); }
-.result-conf { font-size: 12px; color: var(--muted); }
+  textarea.desc {
+    width: 100%; background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: 'Inter', sans-serif;
+    font-size: 14px; line-height: 1.5; padding: 12px 48px 12px 14px;
+    resize: none; min-height: 80px; outline: none; transition: border-color 0.15s;
+  }
+  textarea.desc:focus { border-color: var(--accent); }
+  textarea.desc::placeholder { color: var(--muted); }
+  .desc-wrap { position: relative; margin-bottom: 12px; }
+  .voice-btn {
+    position: absolute; right: 10px; top: 10px; width: 32px; height: 32px;
+    border-radius: 50%; border: none; background: var(--surface);
+    color: var(--muted); font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .voice-btn.active { background: var(--error); color: #fff; }
 
-/* New recording btn */
-.new-btn {
-  width: 100%; max-width: 400px; padding: 14px;
-  background: transparent; border: 1px solid var(--border);
-  border-radius: 12px; color: var(--muted);
-  font-family: inherit; font-size: 13px; font-weight: 700;
-  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
-  transition: all 0.2s; display: none; margin-bottom: 20px;
-}
-.new-btn.show { display: block; }
-.new-btn:hover { border-color: var(--p); color: var(--p); }
+  .row-btns { display: flex; gap: 10px; }
+  .btn-primary {
+    flex: 1; background: var(--accent); border: none; color: #fff;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    padding: 12px; border-radius: 10px; cursor: pointer; transition: opacity 0.15s;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-ghost {
+    background: transparent; border: 1.5px solid var(--border); color: var(--muted);
+    font-family: 'Inter', sans-serif; font-size: 14px; padding: 12px 16px;
+    border-radius: 10px; cursor: pointer; transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
 
-/* Stats bar */
-.stats-bar {
-  width: 100%; max-width: 400px;
-  display: flex; gap: 12px; margin-top: 8px;
-}
-.stat-chip {
-  flex: 1; background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 12px; text-align: center;
-}
-.stat-n { font-size: 22px; font-weight: 800; color: var(--text); }
-.stat-l { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+  .result-card {
+    border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+    margin-bottom: 18px; display: none;
+  }
+  .result-card.show { display: block; }
+  .result-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .result-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px;
+  }
+  .conf-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .conf-high { background: var(--success); }
+  .conf-medium { background: var(--warn); }
+  .conf-low { background: var(--error); }
+  .result-reasoning { font-size: 13px; color: var(--muted); font-style: italic; line-height: 1.6; }
 
-/* Review link */
-.review-link {
-  margin-top: 24px; font-size: 12px; color: var(--muted);
-  text-decoration: none; letter-spacing: 1px;
-  text-transform: uppercase;
-}
-.review-link:hover { color: var(--p); }
+  .clues-section {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin-bottom: 18px; display: none;
+  }
+  .clues-section.show { display: block; }
+  .clues-head { font-size: 16px; font-weight: 700; color: var(--accent2); margin-bottom: 3px; }
+  .clues-sub { font-size: 12px; color: var(--muted); margin-bottom: 22px; }
+  .sec-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .sec { margin-bottom: 20px; }
+
+  .cat-btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cat-btn {
+    flex: 1; min-width: 68px; padding: 9px 6px; background: var(--surface2);
+    border: 1.5px solid var(--border); border-radius: 10px; color: var(--muted);
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.3px; cursor: pointer;
+    transition: all 0.15s; text-align: center;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .cat-btn.ar { background:#fb923c22; border-color:#fb923c; color:#fb923c; }
+  .cat-btn.as { background:#34d39922; border-color:#34d399; color:#34d399; }
+  .cat-btn.ast { background:#a78bfa22; border-color:#a78bfa; color:#a78bfa; }
+  .cat-btn.ad { background:#f8717122; border-color:#f87171; color:#f87171; }
+  .cat-btn.au { background:#fbbf2422; border-color:#fbbf24; color:#fbbf24; }
+
+  .bubble-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bubble {
+    background: var(--surface2); border: 1.5px solid var(--border); border-radius: 20px;
+    color: var(--muted); padding: 8px 14px; font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+    user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+    line-height: 1;
+  }
+  .bubble:active { transform: scale(0.94); }
+  .bubble.sel-detail { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .bubble.sel-ctx { background: #7c5cfc28; border-color: var(--accent); color: var(--accent2); }
+
+  .fb-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .fb-btn {
+    flex: 1; min-width: 66px; background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 10px; color: var(--muted); font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 600; padding: 9px 6px; cursor: pointer;
+    transition: all 0.15s; text-align: center;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .fb-btn.sel { border-color: var(--accent2); color: var(--accent2); background: #7c5cfc18; }
+
+  .save-btn {
+    width: 100%; background: var(--accent); border: none; color: #fff;
+    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700;
+    padding: 16px; border-radius: 12px; cursor: pointer; transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation; margin-top: 4px;
+  }
+  .save-btn:hover { opacity: 0.87; }
+  .save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .concern-box {
+    background: #fbbf2410; border: 1px solid #fbbf2444; border-radius: 12px;
+    padding: 14px 16px; margin-top: 14px;
+  }
+  .concern-title { font-size: 11px; font-weight: 700; color: var(--warn); text-transform: uppercase;
+                   letter-spacing: 0.5px; margin-bottom: 8px; }
+  .concern-msg { font-size: 13px; color: #d4a84b; line-height: 1.5; margin-bottom: 6px; }
+  .concern-footer { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 8px;
+                    padding-top: 8px; border-top: 1px solid var(--border); }
+
+  .success-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 32px 24px; text-align: center; display: none;
+  }
+  .success-card.show { display: block; }
+  .success-icon { font-size: 44px; margin-bottom: 12px; }
+  .success-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .success-sub { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
+  .btn-new {
+    background: var(--surface2); border: 1.5px solid var(--border); color: var(--text);
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    padding: 12px 24px; border-radius: 10px; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-new:hover { border-color: var(--accent); }
+
+  .stats-bar { display: flex; gap: 10px; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .stat-pill { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; text-align: center; }
+  .stat-val { font-size: 20px; font-weight: 700; line-height: 1; margin-bottom: 3px; }
+  .stat-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
 </style>
 </head>
 <body>
 
-<div class="logo">Jack<span>Speak</span></div>
-<div class="sub">Cat Vocalization Interpreter</div>
-
-<!-- Record button -->
-<div class="record-wrap">
-  <div class="record-ring" id="ring"></div>
-  <button class="record-btn" id="recordBtn" onclick="toggleRecord()">
-    <span class="mic-icon" id="micIcon">🎙️</span>
-    <span class="btn-label" id="btnLabel">Hold to Record</span>
-  </button>
-</div>
-
-<div class="timer" id="timer">0:00</div>
-
-<!-- Waveform -->
-<div class="waveform" id="waveform">
-  <div class="wave-bar" id="b0"></div>
-  <div class="wave-bar" id="b1"></div>
-  <div class="wave-bar" id="b2"></div>
-  <div class="wave-bar" id="b3"></div>
-  <div class="wave-bar" id="b4"></div>
-  <div class="wave-bar" id="b5"></div>
-  <div class="wave-bar" id="b6"></div>
-  <div class="wave-bar" id="b7"></div>
-  <div class="wave-bar" id="b8"></div>
-  <div class="wave-bar" id="b9"></div>
-  <div class="wave-bar" id="b10"></div>
-  <div class="wave-bar" id="b11"></div>
-  <div class="wave-bar" id="b12"></div>
-  <div class="wave-bar" id="b13"></div>
-  <div class="wave-bar" id="b14"></div>
-  <div class="wave-bar" id="b15"></div>
-</div>
-
-<!-- Description panel -->
-<div class="desc-panel" id="descPanel">
-  <div class="desc-label">What was Jack doing? What did the sound seem like?</div>
-  <textarea class="desc-textarea" id="descText"
-    placeholder="e.g. Jack was sitting by his empty bowl, hadn't eaten in 4 hours. Short sharp repeated meow, getting louder. He kept looking at me then the bowl."></textarea>
-  <div class="voice-row">
-    <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤 Speak It</button>
-    <button class="skip-btn" onclick="skipDescription()">Skip for now</button>
+<nav>
+  <div class="nav-brand">
+    <img src="/static/logo.png" alt="" onerror="this.style.display='none'">
+    <span>Jack<em>Speak</em></span>
   </div>
-</div>
+  <div class="nav-links">
+    <a href="/" class="nav-link active">Record</a>
+    <a href="/cats" class="nav-link">Cats</a>
+    <a href="/review" class="nav-link">Review</a>
+  </div>
+</nav>
 
-<!-- Submit -->
-<button class="submit-btn" id="submitBtn" onclick="submitRecording()">
-  Analyze What Jack Said
-</button>
+<main>
 
-<!-- Result -->
-<div class="result" id="resultCard">
-  <div class="result-cat" id="resultCat">Category</div>
-  <div class="result-label" id="resultLabel">—</div>
-  <div class="result-reasoning" id="resultReasoning"></div>
-  <div class="result-conf"><span class="confidence-dot" id="confDot"></span><span id="confText"></span></div>
-</div>
+  {% if cats %}
+  <div class="cat-row">
+    <span class="cat-row-label">Cat</span>
+    <select class="cat-select" id="cat-select" onchange="S.catId = this.value ? parseInt(this.value) : null">
+      <option value="">— who is this? —</option>
+      {% for cat in cats %}
+      <option value="{{ cat.id }}">{{ cat.name }}</option>
+      {% endfor %}
+    </select>
+    <a href="/cats" class="add-cat-link">+ Add</a>
+  </div>
+  {% else %}
+  <div class="no-cats-box">
+    Start by <a href="/cats">adding your cat</a> — takes 30 seconds.
+  </div>
+  {% endif %}
 
-<button class="new-btn" id="newBtn" onclick="resetAll()">+ New Recording</button>
+  <div class="record-area">
+    <canvas id="waveform" width="440" height="60"></canvas>
+    <div class="rec-timer" id="timer"></div>
+    <button class="record-btn" id="record-btn" onclick="toggleRecord()" {% if not cats %}disabled{% endif %}>
+      <div class="pulse-ring"></div>
+      <span class="icon" id="btn-icon">🎙️</span>
+    </button>
+    <div class="rec-label" id="rec-label">{% if cats %}Tap to record{% else %}Add a cat first{% endif %}</div>
+  </div>
 
-<!-- Stats -->
-<div class="stats-bar">
-  <div class="stat-chip"><div class="stat-n" id="statTotal">0</div><div class="stat-l">Total</div></div>
-  <div class="stat-chip"><div class="stat-n" id="statLabeled">0</div><div class="stat-l">Labeled</div></div>
-  <div class="stat-chip"><div class="stat-n" id="statPending">0</div><div class="stat-l">Pending</div></div>
-</div>
+  <div class="panel" id="desc-panel">
+    <div class="panel-title">What was happening?</div>
+    <div class="desc-wrap">
+      <textarea class="desc" id="desc-input" rows="3"
+        placeholder="Speak or type — where were they? What were they doing? What did the sound feel like?"></textarea>
+      <button class="voice-btn" id="voice-btn" onclick="toggleVoice()" title="Dictate">🎤</button>
+    </div>
+    <div class="row-btns">
+      <button class="btn-primary" id="analyze-btn" onclick="analyzeRecording()">Analyze →</button>
+      <button class="btn-ghost" onclick="skipToClues()">Skip</button>
+    </div>
+  </div>
 
-<a class="review-link" href="/review">View All Recordings →</a>
+  <div class="result-card" id="result-card">
+    <div class="result-lbl">Best Guess</div>
+    <div class="result-badge" id="result-badge"></div>
+    <div class="result-reasoning" id="result-reasoning"></div>
+  </div>
+
+  <div class="clues-section" id="clues">
+    <div class="clues-head">🐾 Cat Clues</div>
+    <div class="clues-sub">Tap what fits — more clues = smarter app.</div>
+
+    <div class="sec">
+      <div class="sec-lbl">What kind of meow?</div>
+      <div class="cat-btn-row">
+        <button class="cat-btn" data-cat="request"    onclick="selectCat('request')">Request</button>
+        <button class="cat-btn" data-cat="social"     onclick="selectCat('social')">Social</button>
+        <button class="cat-btn" data-cat="stress"     onclick="selectCat('stress')">Stress</button>
+        <button class="cat-btn" data-cat="discomfort" onclick="selectCat('discomfort')">Discomfort</button>
+        <button class="cat-btn" data-cat="unusual"    onclick="selectCat('unusual')">Unusual</button>
+      </div>
+    </div>
+
+    <div class="sec" id="detail-sec">
+      <div class="sec-lbl">Tap what fits:</div>
+      <div class="bubble-grid" id="detail-grid"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-lbl">Situation:</div>
+      <div class="bubble-grid" id="ctx-grid"></div>
+    </div>
+
+    <div class="sec" id="fb-sec">
+      <div class="sec-lbl">Was the app's guess right?</div>
+      <div class="fb-row">
+        <button class="fb-btn" data-fb="right"  onclick="selectFeedback('right')">✓ Yes</button>
+        <button class="fb-btn" data-fb="close"  onclick="selectFeedback('close')">~ Close</button>
+        <button class="fb-btn" data-fb="wrong"  onclick="selectFeedback('wrong')">✗ No</button>
+        <button class="fb-btn" data-fb="unsure" onclick="selectFeedback('unsure')">? Unsure</button>
+      </div>
+    </div>
+
+    <button class="save-btn" id="save-btn" onclick="saveAndTeach()">Save &amp; Teach →</button>
+    <div id="concern-out"></div>
+  </div>
+
+  <div class="success-card" id="success-card">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Saved!</div>
+    <div class="success-sub" id="success-sub">Added to the journal.</div>
+    <button class="btn-new" onclick="resetAll()">Record Another</button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-pill"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-pill"><div class="stat-val" style="color:var(--success)" id="s-labeled">—</div><div class="stat-lbl">Labeled</div></div>
+    <div class="stat-pill"><div class="stat-val" style="color:var(--warn)" id="s-pending">—</div><div class="stat-lbl">Pending</div></div>
+    <div class="stat-pill"><div class="stat-val" style="color:var(--accent2)" id="s-cats">—</div><div class="stat-lbl">Cats</div></div>
+  </div>
+
+</main>
 
 <script>
-let mediaRecorder = null;
-let audioChunks   = [];
-let stream        = null;
-let analyser      = null;
-let audioCtx      = null;
-let animFrame     = null;
-let timerInterval = null;
-let startTime     = null;
-let isRecording   = false;
-let currentBlob   = null;
-let recognition   = null;
+const DETAIL_TAGS    = {{ detail_tags | tojson }};
+const GLOBAL_CONTEXT = {{ global_context | tojson }};
+const CAT_CLASS = { request:'ar', social:'as', stress:'ast', discomfort:'ad', unusual:'au' };
+const CAT_COLOR = { request:'#fb923c', social:'#34d399', stress:'#a78bfa', discomfort:'#f87171', unusual:'#fbbf24' };
 
-const bars = Array.from({length: 16}, (_, i) => document.getElementById(`b${i}`));
+const S = {
+  catId: null, recId: null,
+  aiCategory: null, userCategory: null,
+  detailTags: new Set(), ctxTags: new Set(), feedback: null,
+};
 
-// ── Waveform animation ────────────────────────────────
-function startWaveform() {
-  const dataArr = new Uint8Array(analyser.frequencyBinCount);
-  function draw() {
-    analyser.getByteFrequencyData(dataArr);
-    const step = Math.floor(dataArr.length / 16);
-    bars.forEach((bar, i) => {
-      const val = dataArr[i * step] || 0;
-      const h   = Math.max(4, Math.min(48, (val / 255) * 48));
-      bar.style.height    = h + 'px';
-      bar.classList.add('active');
-    });
-    animFrame = requestAnimationFrame(draw);
-  }
-  draw();
-}
+let mediaRecorder, audioChunks = [], audioBlob = null;
+let analyserNode, animFrame, timerInterval, startTime;
+let recognizer = null, isRecording = false;
 
-function stopWaveform() {
-  cancelAnimationFrame(animFrame);
-  bars.forEach(b => { b.style.height = '8px'; b.classList.remove('active'); });
-}
-
-// ── Timer ─────────────────────────────────────────────
-function startTimer() {
-  startTime = Date.now();
-  const el = document.getElementById('timer');
-  el.classList.add('active');
-  timerInterval = setInterval(() => {
-    const s = Math.floor((Date.now() - startTime) / 1000);
-    el.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
-  }, 500);
-}
-
-function stopTimer() {
-  clearInterval(timerInterval);
-  document.getElementById('timer').classList.remove('active');
-}
-
-// ── Record ────────────────────────────────────────────
 async function toggleRecord() {
-  if (isRecording) {
-    stopRecording();
-  } else {
-    await startRecording();
-  }
+  if (isRecording) stopRecording();
+  else await startRecording();
 }
 
 async function startRecording() {
-  try {
-    stream   = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 64;
-    audioCtx.createMediaStreamSource(stream).connect(analyser);
-
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' :
-                     MediaRecorder.isTypeSupported('audio/mp4')  ? 'audio/mp4'  : '';
-    mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
-    audioChunks   = [];
-    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-    mediaRecorder.onstop = onRecordingStop;
-    mediaRecorder.start();
-
-    isRecording = true;
-    document.getElementById('recordBtn').classList.add('recording');
-    document.getElementById('ring').classList.add('pulse');
-    document.getElementById('micIcon').textContent = '⏹️';
-    document.getElementById('btnLabel').textContent = 'Tap to Stop';
-    startWaveform();
-    startTimer();
-  } catch(e) {
-    alert('Microphone access needed. Please allow it in your browser settings.');
+  if (!S.catId) {
+    const sel = document.getElementById('cat-select');
+    if (sel) { sel.focus(); sel.style.borderColor='var(--accent)'; setTimeout(()=>sel.style.borderColor='',1500); }
+    return;
   }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const actx   = new AudioContext();
+    analyserNode  = actx.createAnalyser();
+    analyserNode.fftSize = 64;
+    actx.createMediaStreamSource(stream).connect(analyserNode);
+
+    audioChunks = [];
+    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+               : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '';
+    mediaRecorder = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+      stream.getTracks().forEach(t => t.stop());
+      show('desc-panel');
+      document.getElementById('desc-input').focus();
+    };
+    mediaRecorder.start();
+    isRecording = true;
+    document.body.classList.add('is-recording');
+    document.getElementById('btn-icon').textContent = '⏹️';
+    document.getElementById('rec-label').textContent = 'Recording… tap to stop';
+    startTime = Date.now();
+    timerInterval = setInterval(() => {
+      const s = Math.floor((Date.now()-startTime)/1000);
+      document.getElementById('timer').textContent =
+        `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    }, 500);
+    drawWave();
+  } catch(e) { alert('Microphone access needed. Please allow and try again.'); }
 }
 
 function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-  stream.getTracks().forEach(t => t.stop());
-  if (audioCtx) audioCtx.close();
+  if (mediaRecorder?.state !== 'inactive') mediaRecorder.stop();
   isRecording = false;
-  stopWaveform();
-  stopTimer();
-  document.getElementById('recordBtn').classList.remove('recording');
-  document.getElementById('ring').classList.remove('pulse');
-  document.getElementById('micIcon').textContent = '🎙️';
-  document.getElementById('btnLabel').textContent = 'Hold to Record';
+  document.body.classList.remove('is-recording');
+  document.getElementById('btn-icon').textContent = '🎙️';
+  document.getElementById('rec-label').textContent = 'Tap to record';
+  document.getElementById('timer').textContent = '';
+  clearInterval(timerInterval);
+  cancelAnimationFrame(animFrame);
+  const c = document.getElementById('waveform');
+  c.getContext('2d').clearRect(0, 0, c.width, c.height);
 }
 
-function onRecordingStop() {
-  currentBlob = new Blob(audioChunks, { type: audioChunks[0]?.type || 'audio/webm' });
-  document.getElementById('descPanel').classList.add('show');
-  document.getElementById('submitBtn').classList.add('show');
-  document.getElementById('descText').focus();
+function drawWave() {
+  const canvas = document.getElementById('waveform');
+  const ctx = canvas.getContext('2d');
+  const buf = new Uint8Array(analyserNode.frequencyBinCount);
+  (function loop() {
+    animFrame = requestAnimationFrame(loop);
+    analyserNode.getByteFrequencyData(buf);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const w = canvas.width / buf.length;
+    buf.forEach((v, i) => {
+      const h = (v/255)*canvas.height;
+      ctx.fillStyle = `rgba(124,92,252,${0.35+(v/255)*0.65})`;
+      ctx.fillRect(i*w+1, canvas.height-h, w-2, h);
+    });
+  })();
 }
 
-// ── Voice-to-text ─────────────────────────────────────
 function toggleVoice() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { alert('Voice input not supported in this browser. Please type your description.'); return; }
-
-  if (recognition) {
-    recognition.stop(); recognition = null;
-    document.getElementById('voiceBtn').classList.remove('listening');
-    document.getElementById('voiceBtn').textContent = '🎤 Speak It';
-    return;
+  if (!SR) { alert('Voice input not supported in this browser.'); return; }
+  const btn = document.getElementById('voice-btn');
+  if (recognizer) {
+    recognizer.stop(); recognizer = null;
+    btn.classList.remove('active'); btn.textContent = '🎤'; return;
   }
-
-  recognition = new SR();
-  recognition.continuous   = true;
-  recognition.interimResults = true;
-  recognition.lang         = 'en-US';
-
-  const ta = document.getElementById('descText');
-  const base = ta.value;
-
-  recognition.onresult = e => {
-    let interim = '', final = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
-      else interim += e.results[i][0].transcript;
-    }
-    ta.value = base + final + interim;
+  recognizer = new SR();
+  recognizer.continuous = true; recognizer.interimResults = true;
+  recognizer.onresult = e => {
+    let final='', interim='';
+    for (let i=0; i<e.results.length; i++)
+      e.results[i].isFinal ? (final+=e.results[i][0].transcript) : (interim+=e.results[i][0].transcript);
+    document.getElementById('desc-input').value = final+interim;
   };
-  recognition.onend = () => {
-    recognition = null;
-    document.getElementById('voiceBtn').classList.remove('listening');
-    document.getElementById('voiceBtn').textContent = '🎤 Speak It';
-  };
-  recognition.start();
-  document.getElementById('voiceBtn').classList.add('listening');
-  document.getElementById('voiceBtn').textContent = '⏹ Stop Listening';
+  recognizer.onend = () => { recognizer=null; btn.classList.remove('active'); btn.textContent='🎤'; };
+  recognizer.start();
+  btn.classList.add('active'); btn.textContent = '🟥';
 }
 
-function skipDescription() {
-  if (recognition) { recognition.stop(); recognition = null; }
-  submitRecording();
-}
-
-// ── Submit ────────────────────────────────────────────
-async function submitRecording() {
-  if (!currentBlob) return;
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true;
-  btn.textContent = 'Analyzing…';
-
+async function analyzeRecording() {
+  const desc = document.getElementById('desc-input').value.trim();
+  const btn  = document.getElementById('analyze-btn');
+  btn.disabled = true; btn.textContent = 'Analyzing…';
   const fd = new FormData();
-  fd.append('audio', currentBlob, 'jack_' + Date.now() + '.webm');
-  fd.append('description', document.getElementById('descText').value.trim());
-
+  fd.append('audio', audioBlob, 'recording');
+  if (desc) fd.append('description', desc);
+  if (S.catId) fd.append('cat_id', S.catId);
   try {
-    const res  = await fetch('/api/upload', { method: 'POST', body: fd });
-    const data = await res.json();
+    const data = await fetch('/api/upload', { method:'POST', body:fd }).then(r=>r.json());
+    S.recId = data.id; S.aiCategory = data.category; S.userCategory = data.category;
+    hide('desc-panel');
     showResult(data);
-    loadStats();
+    showClues(data.category);
   } catch(e) {
-    btn.disabled = false;
-    btn.textContent = 'Analyze What Jack Said';
-    alert('Upload failed. Check your connection.');
+    btn.disabled=false; btn.textContent='Analyze →';
+    alert('Something went wrong. Try again.');
   }
+}
+
+async function skipToClues() {
+  const fd = new FormData();
+  fd.append('audio', audioBlob, 'recording');
+  if (S.catId) fd.append('cat_id', S.catId);
+  try {
+    const data = await fetch('/api/upload', {method:'POST',body:fd}).then(r=>r.json());
+    S.recId = data.id;
+    hide('desc-panel');
+    showClues(null);
+  } catch(e) { alert('Could not save. Try again.'); }
 }
 
 function showResult(data) {
-  document.getElementById('descPanel').classList.remove('show');
-  document.getElementById('submitBtn').classList.remove('show');
+  const col = CAT_COLOR[data.category] || '#a78bfa';
+  const badge = document.getElementById('result-badge');
+  badge.style.cssText = `background:${col}22;color:${col}`;
+  badge.innerHTML = data.confidence
+    ? `<span class="conf-dot conf-${data.confidence}"></span>${data.label||data.category}`
+    : (data.label||data.category||'Saved');
+  document.getElementById('result-reasoning').textContent = data.reasoning
+    ? `"${data.reasoning}"` : 'No description — add clues below to teach the app.';
+  show('result-card');
+}
 
-  const card = document.getElementById('resultCard');
-  card.classList.add('show');
-
-  if (data.category) {
-    document.getElementById('resultCat').textContent   = data.category.toUpperCase();
-    document.getElementById('resultLabel').textContent  = data.label || data.category;
-    document.getElementById('resultReasoning').textContent = data.reasoning || '';
-    const dot = document.getElementById('confDot');
-    dot.className = 'confidence-dot conf-' + (data.confidence || 'medium');
-    document.getElementById('confText').textContent = (data.confidence || 'medium') + ' confidence';
-  } else {
-    document.getElementById('resultCat').textContent    = 'SAVED';
-    document.getElementById('resultLabel').textContent   = 'Recording saved';
-    document.getElementById('resultReasoning').textContent = 'No description provided — add one from the review page to get Jack\'s meaning.';
-    document.getElementById('confText').textContent = '';
+function showClues(aiCat) {
+  const ctxGrid = document.getElementById('ctx-grid');
+  ctxGrid.innerHTML = '';
+  GLOBAL_CONTEXT.forEach(tag => ctxGrid.appendChild(makeBubble(tag, 'ctx')));
+  document.getElementById('fb-sec').style.display = aiCat ? '' : 'none';
+  if (aiCat) selectCat(aiCat);
+  else {
+    document.getElementById('detail-sec').style.display = 'none';
+    document.querySelectorAll('.cat-btn').forEach(b => b.className = 'cat-btn');
   }
-  document.getElementById('newBtn').classList.add('show');
+  show('clues');
+}
+
+function selectCat(cat) {
+  S.userCategory = cat; S.detailTags.clear();
+  document.querySelectorAll('.cat-btn').forEach(b => {
+    b.className = 'cat-btn' + (b.dataset.cat===cat ? ' '+(CAT_CLASS[cat]||'') : '');
+  });
+  const grid = document.getElementById('detail-grid');
+  grid.innerHTML = '';
+  (DETAIL_TAGS[cat]||[]).forEach(tag => grid.appendChild(makeBubble(tag, 'detail')));
+  document.getElementById('detail-sec').style.display = (DETAIL_TAGS[cat]||[]).length ? '' : 'none';
+}
+
+function makeBubble(tag, type) {
+  const b = document.createElement('button');
+  b.className = 'bubble'; b.textContent = tag;
+  b.addEventListener('click', () => {
+    const set = type==='detail' ? S.detailTags : S.ctxTags;
+    const cls = type==='detail' ? 'sel-detail' : 'sel-ctx';
+    set.has(tag) ? (set.delete(tag), b.classList.remove(cls)) : (set.add(tag), b.classList.add(cls));
+  });
+  return b;
+}
+
+function selectFeedback(fb) {
+  S.feedback = fb;
+  document.querySelectorAll('.fb-btn').forEach(b => b.classList.toggle('sel', b.dataset.fb===fb));
+}
+
+async function saveAndTeach() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled=true; btn.textContent='Saving…';
+  try {
+    const td = await fetch(`/api/event/${S.recId}/tags`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ category:S.userCategory, detail_tags:[...S.detailTags], global_context:[...S.ctxTags] }),
+    }).then(r=>r.json());
+
+    if (S.feedback) await fetch(`/api/event/${S.recId}/feedback`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ feedback:S.feedback }),
+    });
+
+    if (td.concerns?.length) {
+      document.getElementById('concern-out').innerHTML = `
+        <div class="concern-box">
+          <div class="concern-title">⚠ Worth Watching</div>
+          ${td.concerns.map(c=>`<div class="concern-msg">${c}</div>`).join('')}
+          <div class="concern-footer">If behavior continues or you notice changes in appetite, litter habits, hiding, or weakness — consider contacting a vet.</div>
+        </div>`;
+      setTimeout(showSuccess, 2500);
+    } else showSuccess();
+
+    loadStats();
+  } catch(e) {
+    btn.disabled=false; btn.textContent='Save & Teach →';
+    alert('Save failed. Try again.');
+  }
+}
+
+function showSuccess() {
+  hide('clues'); hide('result-card');
+  const sel = document.getElementById('cat-select');
+  const nm  = sel?.options[sel.selectedIndex]?.text;
+  document.getElementById('success-sub').textContent =
+    nm && nm.includes('—') ? 'Added to the journal.' : `Added to ${nm}'s journal.`;
+  show('success-card');
 }
 
 function resetAll() {
-  currentBlob = null; audioChunks = [];
-  document.getElementById('resultCard').classList.remove('show');
-  document.getElementById('newBtn').classList.remove('show');
-  document.getElementById('descPanel').classList.remove('show');
-  document.getElementById('submitBtn').classList.remove('show');
-  document.getElementById('descText').value = '';
-  document.getElementById('timer').textContent = '0:00';
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = false;
-  btn.textContent = 'Analyze What Jack Said';
+  S.recId=S.aiCategory=S.userCategory=S.feedback=null;
+  S.detailTags.clear(); S.ctxTags.clear();
+  audioBlob=null; audioChunks=[];
+  ['desc-panel','result-card','clues','success-card'].forEach(id=>hide(id));
+  document.getElementById('desc-input').value='';
+  document.getElementById('analyze-btn').disabled=false;
+  document.getElementById('analyze-btn').textContent='Analyze →';
+  document.getElementById('save-btn').disabled=false;
+  document.getElementById('save-btn').textContent='Save & Teach →';
+  document.getElementById('concern-out').innerHTML='';
 }
 
-// ── Stats ─────────────────────────────────────────────
+function show(id){document.getElementById(id)?.classList.add('show');}
+function hide(id){document.getElementById(id)?.classList.remove('show');}
+
 async function loadStats() {
   try {
-    const d = await fetch('/api/stats').then(r => r.json());
-    document.getElementById('statTotal').textContent   = d.total   || 0;
-    document.getElementById('statLabeled').textContent = d.complete || 0;
-    document.getElementById('statPending').textContent = d.incomplete || 0;
-  } catch(_) {}
+    const d = await fetch('/api/stats').then(r=>r.json());
+    document.getElementById('s-total').textContent   = d.total;
+    document.getElementById('s-labeled').textContent = d.complete;
+    document.getElementById('s-pending').textContent = d.incomplete;
+    document.getElementById('s-cats').textContent    = d.cats||0;
+  } catch{}
 }
-
 loadStats();
 </script>
 </body>
