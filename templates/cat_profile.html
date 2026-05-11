@@ -174,9 +174,40 @@
   .record-cta {
     display:block; text-decoration:none; text-align:center;
     background:var(--accent); color:#fff; font-weight:700; font-size:14px;
-    padding:14px; border-radius:12px; margin-bottom:24px; transition:opacity 0.15s;
+    padding:14px; border-radius:12px; margin-bottom:12px; transition:opacity 0.15s;
   }
   .record-cta:hover { opacity:0.87; }
+
+  .vet-btn {
+    display:block; text-decoration:none; text-align:center;
+    background:transparent; border:1.5px solid var(--border); color:var(--muted);
+    font-weight:600; font-size:13px; padding:11px; border-radius:12px;
+    margin-bottom:24px; transition:all 0.15s;
+  }
+  .vet-btn:hover { color:var(--text); border-color:var(--accent); }
+
+  /* 7-day snapshot */
+  .snapshot-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:16px; margin-bottom:16px;
+  }
+  .snapshot-title { font-size:11px; font-weight:700; text-transform:uppercase;
+                    letter-spacing:0.5px; color:var(--muted); margin-bottom:14px;
+                    display:flex; align-items:center; gap:6px; }
+  .snapshot-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .snap-stat { background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+               padding:10px 12px; text-align:center; }
+  .snap-val { font-size:20px; font-weight:700; line-height:1; margin-bottom:3px; }
+  .snap-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; line-height:1.3; }
+  .snap-val.warn { color:var(--warn); }
+  .snap-val.error { color:var(--error); }
+
+  /* Owner rating badge */
+  .rb { font-size:10px; padding:2px 7px; border-radius:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; }
+  .rb-normal { background:#34d39915; color:#34d399; }
+  .rb-a_little_unusual { background:#fbbf2415; color:#fbbf24; }
+  .rb-very_unusual { background:#f8717115; color:#f87171; }
+  .rb-not_sure { background:var(--surface2); color:var(--muted); }
 </style>
 </head>
 <body>
@@ -299,8 +330,42 @@
     </div>
   </div>
 
+  <!-- 7-day snapshot -->
+  {% if patterns and patterns.total > 0 %}
+  <div class="snapshot-card">
+    <div class="snapshot-title">📊 Last 7 Days — {{ patterns.total }} events</div>
+    <div class="snapshot-grid">
+      <div class="snap-stat">
+        <div class="snap-val {% if patterns.night_vocalizations > 2 %}warn{% endif %}">{{ patterns.night_vocalizations }}</div>
+        <div class="snap-lbl">Night Vocalizations</div>
+      </div>
+      <div class="snap-stat">
+        <div class="snap-val {% if patterns.litter_events > 0 %}warn{% endif %}">{{ patterns.litter_events }}</div>
+        <div class="snap-lbl">Litter Box Notes</div>
+      </div>
+      <div class="snap-stat">
+        <div class="snap-val">{{ patterns.food_events }}</div>
+        <div class="snap-lbl">Food & Water Notes</div>
+      </div>
+      <div class="snap-stat">
+        <div class="snap-val {% if patterns.discomfort_events > 0 %}error{% endif %}">{{ patterns.discomfort_events }}</div>
+        <div class="snap-lbl">Discomfort Events</div>
+      </div>
+      <div class="snap-stat">
+        <div class="snap-val {% if patterns.very_unusual > 0 %}warn{% endif %}">{{ patterns.very_unusual }}</div>
+        <div class="snap-lbl">Marked Very Unusual</div>
+      </div>
+      <div class="snap-stat">
+        <div class="snap-val {% if patterns.unusual_flagged > 0 %}warn{% endif %}">{{ patterns.unusual_flagged }}</div>
+        <div class="snap-lbl">Flagged Events</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Quick record CTA -->
   <a href="/" class="record-cta">🎙️ Record {{ cat.name }} Now</a>
+  <a href="/cats/{{ cat.id }}/report" class="vet-btn">📋 Generate Vet Report</a>
 
   <!-- Journal -->
   <div class="journal-title">Journal</div>
@@ -324,6 +389,9 @@
             {% endif %}
             {% if ev.user_feedback %}
             <span class="fb-badge fb-{{ ev.user_feedback }}">{{ ev.user_feedback }}</span>
+            {% endif %}
+            {% if ev.owner_rating and ev.owner_rating != 'normal' %}
+            <span class="rb rb-{{ ev.owner_rating }}">{{ rating_labels.get(ev.owner_rating, ev.owner_rating) }}</span>
             {% endif %}
           </div>
         </div>

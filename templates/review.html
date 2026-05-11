@@ -85,6 +85,12 @@
   .fb-wrong  { background:#f8717120; color:var(--error); }
   .fb-unsure { background:var(--surface2); color:var(--muted); }
 
+  .rb { font-size:10px; padding:2px 7px; border-radius:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; }
+  .rb-normal { background:#34d39915; color:#34d399; }
+  .rb-a_little_unusual { background:#fbbf2415; color:#fbbf24; }
+  .rb-very_unusual { background:#f8717115; color:#f87171; }
+  .rb-not_sure { background:var(--surface2); color:var(--muted); }
+
   audio { width:100%; height:32px; margin-bottom:10px;
           filter:invert(1) hue-rotate(180deg) brightness(0.75); border-radius:6px; }
 
@@ -188,6 +194,9 @@
           {% endif %}
           {% if rec.user_feedback %}
           <span class="fb-badge fb-{{ rec.user_feedback }}">{{ rec.user_feedback }}</span>
+          {% endif %}
+          {% if rec.owner_rating and rec.owner_rating != 'normal' %}
+          <span class="rb rb-{{ rec.owner_rating }}">{{ rec.owner_rating | replace('_', ' ') }}</span>
           {% endif %}
         </div>
         <span class="rec-date">{{ rec.created_at[:16].replace('T', ' ') }}</span>
