@@ -725,6 +725,118 @@ function toggleVoice() {
   recognizer.start(); btn.classList.add('active'); btn.textContent='🟥';
 }
 
+/* ═══════════════ ACOUSTIC FINGERPRINT ═══════════════
+   The server cannot decode webm/opus without ffmpeg or librosa, and this
+   project has neither. The browser already holds the decoded samples, so the
+   feature extraction happens here and only ~40 numbers go over the wire.
+
+   What we measure, and why each one distinguishes one meow from another:
+     duration      a demand is short, a complaint is long
+     energy shape  8 bins of loudness over time, so a rising "mrrrOW" and a
+                   falling "MEEow" come out different even at the same pitch
+     spectrum      16 log-spaced band energies, the timbre of the sound
+     brightness    spectral centroid, mean and spread
+     roughness     zero-crossing rate, separates a purr-trill from a clean cry
+     pitch         autocorrelation estimate, mean and range
+   L2 normalised at the end so cosine similarity is scale-free and a loud meow
+   matches a quiet one of the same shape. */
+async function fingerprint(blob) {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+    const x = buf.getChannelData(0), sr = buf.sampleRate, N = x.length;
+    if (N < 2048) { ctx.close(); return null; }
+
+    // trim leading/trailing silence so duration means the sound, not the pause
+    const peak = Math.max(...Array.from({length:200},(_,i)=>Math.abs(x[(i*N/200)|0])));
+    const gate = peak * 0.08;
+    let a = 0, b = N-1;
+    while (a < N   && Math.abs(x[a]) < gate) a++;
+    while (b > a   && Math.abs(x[b]) < gate) b--;
+    const len = Math.max(2048, b-a);
+
+    const f = [];
+    f.push(Math.min(len/sr, 5) / 5);                       // duration, capped at 5s
+
+    // energy envelope, 8 bins
+    const B = 8, step = Math.floor(len/B);
+    let env = [];
+    for (let i=0;i<B;i++){
+      let e=0; for (let k=0;k<step;k++){ const v=x[a+i*step+k]||0; e+=v*v; }
+      env.push(Math.sqrt(e/step));
+    }
+    const emax = Math.max(...env)||1;
+    env = env.map(v=>v/emax);
+    f.push(...env);
+
+    // one FFT over the loudest 2048-sample window
+    let bestI=a, bestE=-1;
+    for (let i=a;i<b-2048;i+=1024){
+      let e=0; for(let k=0;k<2048;k+=8){ const v=x[i+k]; e+=v*v; }
+      if (e>bestE){ bestE=e; bestI=i; }
+    }
+    const M=2048, re=new Float64Array(M), im=new Float64Array(M);
+    for (let i=0;i<M;i++) re[i] = x[bestI+i] * (0.5 - 0.5*Math.cos(2*Math.PI*i/(M-1))); // hann
+    // naive DFT on a decimated set of bins, enough for 16 bands and cheap
+    const mag = new Float64Array(M/2);
+    for (let k=1;k<M/2;k++){
+      let sr_=0, si_=0;
+      for (let n=0;n<M;n+=2){                    // stride 2: halves the work, keeps shape
+        const ang = -2*Math.PI*k*n/M;
+        sr_ += re[n]*Math.cos(ang); si_ += re[n]*Math.sin(ang);
+      }
+      mag[k] = Math.sqrt(sr_*sr_ + si_*si_);
+    }
+    // 16 log-spaced bands from 200Hz to 8kHz (cat meows live in here)
+    const bands=16, lo=200, hi=Math.min(8000, sr/2), out=[];
+    for (let i=0;i<bands;i++){
+      const f1 = lo*Math.pow(hi/lo, i/bands), f2 = lo*Math.pow(hi/lo,(i+1)/bands);
+      const k1 = Math.max(1,(f1/sr*M)|0), k2 = Math.min(M/2-1,(f2/sr*M)|0);
+      let e=0,c=0; for(let k=k1;k<=k2;k++){ e+=mag[k]; c++; }
+      out.push(Math.log1p(c? e/c : 0));
+    }
+    const omax = Math.max(...out)||1;
+    f.push(...out.map(v=>v/omax));
+
+    // brightness: spectral centroid mean and spread
+    let num=0, den=0;
+    for (let k=1;k<M/2;k++){ const hz=k*sr/M; num+=hz*mag[k]; den+=mag[k]; }
+    const centroid = den? num/den : 0;
+    let sp=0; for (let k=1;k<M/2;k++){ const hz=k*sr/M; sp += mag[k]*(hz-centroid)**2; }
+    f.push(Math.min(centroid/4000,1), Math.min(Math.sqrt(den?sp/den:0)/4000,1));
+
+    // roughness: zero-crossing rate
+    let z=0; for (let i=a+1;i<b;i++) if ((x[i-1]<0)!==(x[i]<0)) z++;
+    f.push(Math.min(z/(b-a)*10, 1));
+
+    // pitch by autocorrelation, 100Hz to 1500Hz
+    const minL=Math.floor(sr/1500), maxL=Math.floor(sr/100);
+    let bestL=0, bestC=0;
+    for (let L=minL;L<maxL;L++){
+      let c=0; for (let i=0;i<2048;i++) c += (x[bestI+i]||0)*(x[bestI+i+L]||0);
+      if (c>bestC){ bestC=c; bestL=L; }
+    }
+    f.push(bestL? Math.min((sr/bestL)/1500,1) : 0, Math.min(bestC/(bestE||1),1));
+
+    ctx.close();
+    const n = Math.sqrt(f.reduce((s,v)=>s+v*v,0)) || 1;   // L2 normalise
+    return f.map(v=>+(v/n).toFixed(5));
+  } catch (e) { return null; }   // never block a recording on this
+}
+
+/* Ask this cat's own library what the sound resembles. */
+async function listenToSound(blob, catId) {
+  if (!catId) return null;
+  const fp = await fingerprint(blob);
+  if (!fp) return null;
+  try {
+    return await fetch(`/api/listen/${catId}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({fingerprint: JSON.stringify(fp)})
+    }).then(r=>r.json());
+  } catch(e) { return null; }
+}
+
 async function analyzeRecording() {
   const desc=document.getElementById('desc-input').value.trim();
   const btn=document.getElementById('analyze-btn');
@@ -733,6 +845,8 @@ async function analyzeRecording() {
   fd.append('audio',audioBlob,'recording');
   if (desc) fd.append('description',desc);
   if (S.catId) fd.append('cat_id',S.catId);
+  const fpv = await fingerprint(audioBlob);
+  if (fpv) fd.append('fingerprint', JSON.stringify(fpv));
   try {
     const data=await fetch('/api/upload',{method:'POST',body:fd}).then(r=>r.json());
     S.recId=data.id; S.aiCategory=data.category; S.userCategory=data.category;
@@ -744,6 +858,8 @@ async function skipToClues() {
   const fd=new FormData();
   fd.append('audio',audioBlob,'recording');
   if (S.catId) fd.append('cat_id',S.catId);
+  const fpv2 = await fingerprint(audioBlob);
+  if (fpv2) fd.append('fingerprint', JSON.stringify(fpv2));
   try {
     const data=await fetch('/api/upload',{method:'POST',body:fd}).then(r=>r.json());
     S.recId=data.id; hide('desc-panel'); showClues(null);

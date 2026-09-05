@@ -162,7 +162,8 @@ def init_db():
         owner_note     TEXT,
         complete       INTEGER DEFAULT 0,
         created_at     TEXT DEFAULT (datetime('now'))
-    )''')
+    )'''
+)
     cols = [r[1] for r in con.execute("PRAGMA table_info(recordings)").fetchall()]
     for col, defn in [
         ('cat_id',         'INTEGER'),
@@ -174,6 +175,10 @@ def init_db():
         ('user_feedback',  'TEXT'),
         ('owner_rating',   'TEXT'),
         ('owner_note',     'TEXT'),
+        # Acoustic fingerprint for the meow classifier. A JSON array of floats,
+        # computed in the BROWSER: the recordings are webm/opus and this project
+        # has neither ffmpeg nor librosa to decode them server-side.
+        ('fingerprint',    'TEXT'),
     ]:
         if col not in cols:
             con.execute(f'ALTER TABLE recordings ADD COLUMN {col} {defn}')
@@ -599,10 +604,12 @@ def upload():
         complete = 1
         category, confidence, reasoning = classify(description, cat_name)
 
+    fingerprint = (request.form.get('fingerprint') or '').strip() or None
+
     con = get_db()
     cur = con.execute(
-        'INSERT INTO recordings (cat_id, filename, description, category, confidence, reasoning, complete) VALUES (?,?,?,?,?,?,?)',
-        (cat_id, fname, description or None, category, confidence, reasoning, complete)
+        'INSERT INTO recordings (cat_id, filename, description, category, confidence, reasoning, complete, fingerprint) VALUES (?,?,?,?,?,?,?,?)',
+        (cat_id, fname, description or None, category, confidence, reasoning, complete, fingerprint)
     )
     rec_id = cur.lastrowid
     con.commit()
@@ -741,6 +748,127 @@ def api_recordings():
     ''').fetchall()
     con.close()
     return jsonify(enrich(rows))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# THE MEOW CLASSIFIER
+#
+# This listens to the SOUND, which is a different claim from the rest of the
+# app. Everything else here classifies your DESCRIPTION of what was happening,
+# which is honest and reliable. This does not, so it is fenced accordingly.
+#
+# How it works, and how MeowTalk works too: there is no universal cat language
+# model, and anyone selling one is guessing confidently. What IS real is that a
+# single cat is fairly consistent with itself. Jack's "feed me" sounds like
+# Jack's other "feed me" and not much like Jack's "get off me".
+#
+# So this is per-cat few-shot matching. Label some meows, and a new meow is
+# compared against that cat's own labelled library by cosine similarity. No
+# training, no dataset, no GPU. It knows YOUR cat or it knows nothing, and it
+# says which.
+#
+# MIN_EXAMPLES mirrors MeowTalk's own stated requirement of five examples
+# before it will predict a label.
+# ─────────────────────────────────────────────────────────────────────────────
+MIN_EXAMPLES = 5        # per label, per cat, before we will guess
+MIN_SIM      = 0.62     # below this the nearest match means nothing
+# MIN_MARGIN is the one that actually protects us. Cosine similarity between
+# two all-positive vectors is naturally high, so a raw score of 0.85 against
+# the best label is not evidence of anything on its own. What matters is
+# whether that label beat the runner-up. Testing with a deliberately
+# unlike-anything sound produced 0.845 similarity and a 0.008 margin: the sound
+# was equidistant from every label, and without this gate we would have called
+# it "request" with medium confidence. Saying nothing is the correct answer.
+MIN_MARGIN   = 0.04
+
+def _cos(a, b):
+    dot = sum(x*y for x, y in zip(a, b))
+    na = sum(x*x for x in a) ** 0.5
+    nb = sum(x*x for x in b) ** 0.5
+    return dot / (na*nb) if na and nb else 0.0
+
+
+@app.route('/api/listen/<int:cat_id>', methods=['POST'])
+def listen(cat_id):
+    """Classify a meow by sound alone, against this cat's own labelled library."""
+    try:
+        fp = json.loads(request.json.get('fingerprint') or '[]')
+    except Exception:
+        fp = []
+    if not fp:
+        return jsonify({'ok': False, 'why': 'no fingerprint'}), 400
+
+    con = get_db()
+    rows = con.execute(
+        """SELECT category, fingerprint FROM recordings
+           WHERE cat_id = ? AND fingerprint IS NOT NULL AND category IS NOT NULL""",
+        (cat_id,)).fetchall()
+    con.close()
+
+    library = {}
+    for r in rows:
+        try:
+            v = json.loads(r['fingerprint'])
+        except Exception:
+            continue
+        if len(v) == len(fp):
+            library.setdefault(r['category'], []).append(v)
+
+    ready = {k: v for k, v in library.items() if len(v) >= MIN_EXAMPLES}
+    if not ready:
+        have = {k: len(v) for k, v in library.items()}
+        return jsonify({'ok': False, 'why': 'learning', 'have': have,
+                        'need': MIN_EXAMPLES, 'labels_ready': 0,
+                        'message': f'Not enough examples yet. {MIN_EXAMPLES} of a '
+                                   f'label are needed before this cat can be read by sound.'})
+
+    scored = []
+    for label, vecs in ready.items():
+        sims = sorted((_cos(fp, v) for v in vecs), reverse=True)
+        # mean of the best three, so one lucky match cannot carry a label
+        top = sims[:3]
+        scored.append((sum(top)/len(top), label, len(vecs)))
+    scored.sort(reverse=True)
+
+    best, label, n = scored[0]
+    runner = scored[1][0] if len(scored) > 1 else 0.0
+    margin = best - runner
+
+    if best < MIN_SIM:
+        return jsonify({'ok': False, 'why': 'unsure', 'best': round(best, 3),
+                        'margin': round(margin, 3),
+                        'message': "That did not sound like anything this cat has been "
+                                   "labelled saying before."})
+
+    if len(scored) > 1 and margin < MIN_MARGIN:
+        return jsonify({'ok': False, 'why': 'ambiguous',
+                        'best': round(best, 3), 'margin': round(margin, 3),
+                        'between': [scored[0][1], scored[1][1]],
+                        'message': f"That sat almost exactly between "
+                                   f"{CATEGORY_LABELS.get(scored[0][1], scored[0][1])} and "
+                                   f"{CATEGORY_LABELS.get(scored[1][1], scored[1][1])}. "
+                                   f"Not close enough to either to call it."})
+
+    conf = 'high' if (best > 0.86 and margin > 0.06) else 'medium' if best > 0.74 else 'low'
+    return jsonify({'ok': True, 'category': label,
+                    'label': CATEGORY_LABELS.get(label, label),
+                    'similarity': round(best, 3), 'margin': round(margin, 3),
+                    'confidence': conf, 'examples': n,
+                    'labels_ready': len(ready)})
+
+
+@app.route('/api/listen/<int:cat_id>/readiness')
+def listen_readiness(cat_id):
+    """How close is this cat to being readable by sound."""
+    con = get_db()
+    rows = con.execute(
+        """SELECT category, COUNT(*) n FROM recordings
+           WHERE cat_id = ? AND fingerprint IS NOT NULL AND category IS NOT NULL
+           GROUP BY category""", (cat_id,)).fetchall()
+    con.close()
+    have = {r['category']: r['n'] for r in rows}
+    return jsonify({'have': have, 'need': MIN_EXAMPLES,
+                    'ready': [k for k, v in have.items() if v >= MIN_EXAMPLES]})
 
 
 @app.route('/api/stats')
